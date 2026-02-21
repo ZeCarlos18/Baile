@@ -1,23 +1,18 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
-import { RoomProvider } from './contexts/RoomContext'
-import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { RoomProvider } from "./contexts/RoomContext"
+import Home from "./pages/Home"
+import Room from "./pages/Room"
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <RoomProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard/:roomId" element={<Dashboard />} />
-            <Route path="/" element={<Navigate to="/login" />} />
-          </Routes>
-        </RoomProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <RoomProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/room" element={<Room />} />
+        </Routes>
+      </BrowserRouter>
+    </RoomProvider>
   )
 }
 

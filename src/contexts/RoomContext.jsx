@@ -1,41 +1,23 @@
-import { createContext, useState, useCallback } from 'react'
+import { createContext, useState } from "react"
 
 export const RoomContext = createContext()
 
 export function RoomProvider({ children }) {
-  const [room, setRoom] = useState(null)
+  const [roomCode, setRoomCode] = useState("")
   const [queue, setQueue] = useState([])
-  const [currentTrack, setCurrentTrack] = useState(null)
-  const [roulette, setRoulette] = useState(null)
-  const [socket, setSocket] = useState(null)
-
-  const handleRoomUpdate = useCallback((updatedRoom) => {
-    setRoom(updatedRoom)
-    setCurrentTrack(updatedRoom.currentTrack)
-    setQueue(updatedRoom.queue || [])
-  }, [])
-
-  const handleQueueUpdate = useCallback((newQueue) => {
-    setQueue(newQueue)
-  }, [])
-
-  const handleRouletteStart = useCallback((rouletteData) => {
-    setRoulette(rouletteData)
-  }, [])
+  const [currentVideo, setCurrentVideo] = useState(null)
 
   return (
-    <RoomContext.Provider value={{
-      room,
-      queue,
-      currentTrack,
-      roulette,
-      socket,
-      setSocket,
-      handleRoomUpdate,
-      handleQueueUpdate,
-      handleRouletteStart,
-      setRoulette,
-    }}>
+    <RoomContext.Provider
+      value={{
+        roomCode,
+        setRoomCode,
+        queue,
+        setQueue,
+        currentVideo,
+        setCurrentVideo
+      }}
+    >
       {children}
     </RoomContext.Provider>
   )
