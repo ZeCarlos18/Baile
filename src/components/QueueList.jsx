@@ -1,10 +1,10 @@
 function QueueList({ queue }) {
   return (
     <div>
-      <h3>Fila:</h3>
+      <h3>Fila/Roleta:</h3>
       <ul>
-        {queue.map((v, i) => (
-          <li key={i}>{v.title}</li>
+        {queue.map((v) => (
+          <li key={v.id}>{v.title}</li>
         ))}
       </ul>
     </div>

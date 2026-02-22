@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react"
+import { useParams } from "react-router-dom"
 import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
 import Player from "../components/Player"
@@ -7,8 +8,10 @@ import QueueList from "../components/QueueList"
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 function Room() {
+  const { code } = useParams() // Pegar código da URL
   const {
     roomCode,
+    setRoomCode,
     queue,
     setQueue,
     currentVideo,
@@ -17,11 +20,49 @@ function Room() {
 
   const socket = useSocket()
   const [results, setResults] = useState([])
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [listenersSetup, setListenersSetup] = useState(false)
 
+  // Setar roomCode do URL
   useEffect(() => {
-    socket.on("update-queue", setQueue)
-    socket.on("play-video", setCurrentVideo)
-  }, [])
+    if (code && !roomCode) {
+      console.log("📍 Definindo sala da URL:", code)
+      setRoomCode(code)
+    }
+  }, [code, roomCode, setRoomCode])
+
+  // Fazer join na sala quando roomCode é setado
+  useEffect(() => {
+    if (roomCode) {
+      console.log("🚪 Entrando na sala:", roomCode)
+      socket.emit("join-room", roomCode)
+    }
+  }, [roomCode, socket])
+
+  // Configurar listeners apenas UMA VEZ
+  useEffect(() => {
+    if (!listenersSetup && roomCode) {
+      console.log("🔌 Configurando listeners para sala:", roomCode)
+      
+      socket.on("update-queue", (newQueue) => {
+        console.log("📊 Fila atualizada:", newQueue)
+        setQueue(newQueue)
+      })
+      
+      socket.on("play-video", (video) => {
+        console.log("▶️ Recebido play-video:", video)
+        setCurrentVideo(video)
+        setIsPlaying(true)
+      })
+
+      setListenersSetup(true)
+    }
+
+    return () => {
+      // Cleanup apenas se desmontar
+      // Não remover listeners aqui para evitar duplicatas
+    }
+  }, [listenersSetup, roomCode, socket, setQueue, setCurrentVideo])
 
   async function search(query) {
   try {
@@ -42,17 +83,54 @@ function Room() {
 }
 
   function addVideo(video) {
-    socket.emit("add-video", {
-      code: roomCode,
-      video: {
-        id: video.id.videoId,
-        title: video.snippet.title
-      }
-    })
+    const videoData = {
+      id: video.id.videoId,
+      title: video.snippet.title
+    }
+
+    console.log("📝 Adicionando vídeo:", videoData)
+    console.log("🎵 Vídeo atual:", currentVideo)
+    console.log("📊 Sala:", roomCode)
+
+    // Se não há vídeo tocando, toca imediatamente
+    if (!currentVideo) {
+      console.log("▶️ Nenhum vídeo tocando, tocando agora...")
+      setIsPlaying(true)
+      socket.emit("add-video", {
+        code: roomCode,
+        video: videoData,
+        playNow: true // Flag para tocar imediatamente
+      })
+    } else {
+      // Se há vídeo tocando, adiciona à fila
+      console.log("⏳ Já tem vídeo tocando, adicionando à fila...")
+      socket.emit("add-video", {
+        code: roomCode,
+        video: videoData,
+        playNow: false
+      })
+    }
   }
 
   function spin() {
     socket.emit("spin-wheel", roomCode)
+  }
+
+  function handleVideoEnd() {
+    console.log("Vídeo terminou. Fila:", queue)
+    
+    // Se há vídeos na fila, gira automaticamente
+    if (queue && queue.length > 0) {
+      console.log("Auto-girando roleta...")
+      setTimeout(() => {
+        spin()
+      }, 1000) // Pequeno delay antes de girar
+    } else {
+      // Se não há fila, pausa
+      setIsPlaying(false)
+      setCurrentVideo(null)
+      console.log("Nenhum vídeo na fila")
+    }
   }
 
   return (
@@ -74,7 +152,7 @@ function Room() {
 
       <button onClick={spin}>🎡 Girar Roleta</button>
 
-      {currentVideo && <Player videoId={currentVideo.id} />}
+      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} />}
     </div>
   )
 }
