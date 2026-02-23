@@ -1,198 +1,184 @@
 .roulette-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 50;
-  backdrop-filter: blur(4px);
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-.roulette-modal {
-  background: rgba(20, 20, 20, 0.95);
-  border: 2px solid #1db954;
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 600px;
-  text-align: center;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
+@keyframes fadeIn {
   from {
-    transform: translateY(30px);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
     opacity: 1;
   }
 }
 
-.roulette-modal h2 {
-  color: #1db954;
-  margin: 0 0 1rem 0;
-  font-size: 2em;
-}
-
-.timer {
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1em;
-}
-
-.timer strong {
-  color: #1db954;
-  font-size: 1.3em;
-}
-
 .roulette-container {
   position: relative;
-  width: 320px;
-  height: 320px;
-  margin: 0 auto 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  animation: slideUp 0.4s ease-out;
 }
 
-.roulette-pointer {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 20px solid #1db954;
-  z-index: 10;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.roulette-inner {
+  position: relative;
+  width: 450px;
+  height: 450px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .roulette-wheel {
-  position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
-  border: 4px solid #1db954;
-  overflow: hidden;
-  transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: none;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
 }
 
 .roulette-wheel.spinning {
-  animation: spinWheel 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: spin 3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
-@keyframes spinWheel {
+@keyframes spin {
   0% {
     transform: rotate(0deg);
   }
   100% {
-    transform: rotate(1440deg);
+    transform: rotate(2160deg);
   }
 }
 
-.wheel-item {
+.roulette-pointer {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.85;
-  border: 2px solid rgba(29, 185, 84, 0.3);
+  top: -10px;
   left: 50%;
-  top: 50%;
-  margin-left: -30px;
-  margin-top: -30px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-top: 25px solid #FFD700;
+  z-index: 10;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
 }
 
-.wheel-item:hover {
-  opacity: 1;
-  filter: brightness(1.2);
-  border-color: #1db954;
+.roulette-text {
+  pointer-events: none;
+  text-anchor: middle;
+  font-size: 11px;
+  font-weight: bold;
+  fill: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  word-wrap: break-word;
+}
+
+.roulette-spin-button {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #000;
+  border: none;
+  padding: 15px 50px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.roulette-spin-button:hover {
   transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
 }
 
-.wheel-item.selected {
-  border: 3px solid #1db954;
-  opacity: 1;
-  filter: brightness(1.4) drop-shadow(0 0 10px #1db954);
-  box-shadow: 0 0 15px rgba(29, 185, 84, 0.6);
+.roulette-spin-button:active {
+  transform: scale(0.95);
 }
 
-.wheel-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.roulette-info {
-  margin: 1.5rem 0;
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.selected-track {
+.roulette-result {
+  text-align: center;
   color: white;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2em;
-  font-weight: 600;
+  animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.selected-artist {
-  color: rgba(255, 255, 255, 0.6);
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.roulette-result h2 {
+  font-size: 28px;
+  margin: 0 0 10px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.roulette-result p {
+  font-size: 18px;
   margin: 0;
-  font-size: 0.95em;
+  max-width: 400px;
+  word-wrap: break-word;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-.winner-text {
-  color: #1db954;
-  font-size: 1.3em;
-  margin-top: 0.5rem;
-  animation: pulse-text 0.6s ease-in-out;
-}
-
-.vote-text {
-  color: #1db954;
-  margin: 0;
-  font-size: 0.95em;
-  animation: pulse-text 1s ease-in-out infinite;
-}
-
-.spinning-text {
-  color: #1db954;
-  margin: 0;
-  font-size: 1em;
-  animation: spin-animation 1s linear infinite;
-}
-
-@keyframes pulse-text {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-@keyframes spin-animation {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
+/* Responsivo */
 @media (max-width: 768px) {
-  .roulette-modal {
-    max-width: 90vw;
-    padding: 1.5rem;
+  .roulette-inner {
+    width: 300px;
+    height: 300px;
   }
 
-  .roulette-container {
-    width: 280px;
-    height: 280px;
+  .roulette-wheel {
+    width: 100%;
+    height: 100%;
   }
 
-  .wheel-item {
-    width: 50px;
-    height: 50px;
-    margin-left: -25px;
-    margin-top: -25px;
+  .roulette-result h2 {
+    font-size: 20px;
+  }
+
+  .roulette-result p {
+    font-size: 14px;
   }
 }

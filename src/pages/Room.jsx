@@ -5,6 +5,7 @@ import { useSocket } from "../hooks/useSocket"
 import Player from "../components/Player"
 import SearchBar from "../components/SearchBar"
 import QueueList from "../components/QueueList"
+import Roulette from "../components/Roulette"
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 function Room() {
@@ -22,6 +23,7 @@ function Room() {
   const [results, setResults] = useState([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenersSetup, setListenersSetup] = useState(false)
+  const [showRoulette, setShowRoulette] = useState(false)
 
   // Setar roomCode do URL
   useEffect(() => {
@@ -113,7 +115,21 @@ function Room() {
   }
 
   function spin() {
+    if (queue.length === 0) {
+      alert("Nenhuma música na fila!")
+      return
+    }
+    setShowRoulette(true)
+  }
+
+  function handleSpinComplete(selectedIndex) {
+    // Emitir evento para o servidor girar
     socket.emit("spin-wheel", roomCode)
+    
+    // Fechar roleta após 2 segundos
+    setTimeout(() => {
+      setShowRoulette(false)
+    }, 2000)
   }
 
   function handleVideoEnd() {
@@ -153,6 +169,13 @@ function Room() {
       <button onClick={spin}>🎡 Girar Roleta</button>
 
       {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} />}
+
+      {showRoulette && (
+        <Roulette 
+          queue={queue} 
+          onSpinComplete={handleSpinComplete}
+        />
+      )}
     </div>
   )
 }
