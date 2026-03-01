@@ -7,7 +7,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -159,7 +159,9 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3000;
-httpServer.listen(PORT, () => {
-  console.log(`🎵 Servidor Baile rodando na porta ${PORT}`);
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0';
+httpServer.listen(PORT, HOST, () => {
+  console.log(`🎵 Servidor Baile rodando em ${HOST}:${PORT}`);
+  console.log(`📱 Acesse de qualquer lugar: http://<seu-ip>:${PORT}`);
 });
