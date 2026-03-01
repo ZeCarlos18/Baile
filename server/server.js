@@ -14,6 +14,11 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 
+// Rota de health check
+app.get('/', (req, res) => {
+  res.json({ status: 'Backend Baile online ✅' });
+});
+
 // Armazenar salas e suas filas
 const rooms = new Map();
 
