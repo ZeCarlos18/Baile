@@ -30,6 +30,7 @@ function Room() {
   const [playerRef, setPlayerRef] = useState(null)
   const [selectedRouletteIndex, setSelectedRouletteIndex] = useState(null)
   const [selectedRouletteVideo, setSelectedRouletteVideo] = useState(null)
+  const [rouletteQueueSnapshot, setRouletteQueueSnapshot] = useState(null)
 
   useEffect(() => {
     if (code && !roomCode) {
@@ -70,6 +71,7 @@ function Room() {
       socket.on("start-roulette", (data) => {
         setSelectedRouletteIndex(data.selectedIndex)
         setSelectedRouletteVideo(data.selectedVideo)
+        setRouletteQueueSnapshot(data.queue)
         setShowRoulette(true)
       })
 
@@ -190,7 +192,7 @@ function Room() {
 
       {showRoulette && (
         <Roulette 
-          queue={queue} 
+          queue={rouletteQueueSnapshot} 
           selectedIndex={selectedRouletteIndex}
           selectedVideo={selectedRouletteVideo}
           onSpinComplete={handleSpinComplete}

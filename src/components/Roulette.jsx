@@ -7,8 +7,8 @@ function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [hasClickedSpin, setHasClickedSpin] = useState(false)
 
-  const itemsCount = queue.length
-  const itemAngle = 360 / itemsCount
+  const itemsCount = queue ? queue.length : 0
+  const itemAngle = itemsCount > 0 ? 360 / itemsCount : 0
 
   useEffect(() => {
     if (hasClickedSpin && !isAnimating && selectedIndex !== null && selectedVideo) {

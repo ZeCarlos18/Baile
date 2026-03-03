@@ -120,9 +120,10 @@ io.on('connection', (socket) => {
     if (room && room.queue.length > 0) {
       const randomIndex = Math.floor(Math.random() * room.queue.length);
       const selectedVideo = room.queue[randomIndex];
+      const queueSnapshot = [...room.queue];
 
       io.to(roomCode).emit('start-roulette', {
-        queue: room.queue,
+        queue: queueSnapshot,
         selectedIndex: randomIndex,
         selectedVideo: selectedVideo
       });
