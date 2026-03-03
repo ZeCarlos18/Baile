@@ -82,7 +82,6 @@ function Room() {
         setVotesNeeded(data.votesNeeded)
         setIsVoting(true)
         setShowRoulette(true)
-        setHasVoted(true)
       })
 
       socket.on("roulette-votes-updated", (data) => {
@@ -179,6 +178,7 @@ function Room() {
       return
     }
     
+    setHasVoted(true)
     socket.emit("request-roulette", roomCode)
   }
 
