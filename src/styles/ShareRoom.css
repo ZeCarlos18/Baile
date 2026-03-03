@@ -1,0 +1,109 @@
+.share-room-container {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.share-room-card {
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0.1), rgba(29, 185, 84, 0.05));
+  border: 2px solid rgba(29, 185, 84, 0.4);
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  backdrop-filter: blur(10px);
+}
+
+.share-room-card h3 {
+  color: #1db954;
+  margin: 0 0 1rem 0;
+  font-size: 1.2em;
+}
+
+.share-link-box {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.share-link-input {
+  flex: 1;
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-size: 0.9em;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.share-link-input:focus {
+  outline: none;
+  border-color: #1db954;
+  background: rgba(30, 30, 30, 0.95);
+}
+
+.copy-btn {
+  background: #1db954;
+  color: #191414;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.copy-btn:hover:not(.copied) {
+  background: #1ed760;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+}
+
+.copy-btn.copied {
+  background: #4ade80;
+  cursor: default;
+}
+
+.share-btn {
+  display: block;
+  width: 100%;
+  background: rgba(29, 185, 84, 0.2);
+  border: 1px solid rgba(29, 185, 84, 0.5);
+  color: #1db954;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.share-btn:hover {
+  background: rgba(29, 185, 84, 0.3);
+  border-color: #1db954;
+}
+
+.share-info {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85em;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .share-room-card {
+    padding: 1rem;
+  }
+
+  .share-link-box {
+    flex-direction: column;
+  }
+
+  .copy-btn {
+    width: 100%;
+  }
+}

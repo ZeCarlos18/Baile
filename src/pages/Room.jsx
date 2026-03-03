@@ -6,6 +6,7 @@ import Player from "../components/Player"
 import SearchBar from "../components/SearchBar"
 import QueueList from "../components/QueueList"
 import Roulette from "../components/Roulette"
+import ShareRoom from "../components/ShareRoom"
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 function Room() {
@@ -152,6 +153,8 @@ function Room() {
   return (
     <div>
       <h2>Sala: {roomCode}</h2>
+
+      <ShareRoom roomCode={roomCode} />
 
       <SearchBar onSearch={search} />
 
