@@ -147,6 +147,13 @@ function Room() {
       alert("Nenhuma música na fila!")
       return
     }
+    
+    if (queue.length === 1) {
+      const video = queue[0]
+      socket.emit("next-video")
+      return
+    }
+    
     socket.emit("spin-wheel", roomCode)
   }
 
