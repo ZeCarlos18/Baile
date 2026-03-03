@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
@@ -21,11 +21,14 @@ function Room() {
   } = useContext(RoomContext)
 
   const socket = useSocket()
+  const playerInstanceRef = useRef(null) // Referência ao player instance
   const [results, setResults] = useState([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenersSetup, setListenersSetup] = useState(false)
   const [showRoulette, setShowRoulette] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0) // Tempo decorrido do vídeo
+  const [playerRef, setPlayerRef] = useState(null) // Referência ao player para controle remoto
+  const [syncInterval, setSyncInterval] = useState(null) // Intervalo de sincronização
 
   // Setar roomCode do URL
   useEffect(() => {
@@ -75,6 +78,56 @@ function Room() {
         setIsPlaying(true)
       })
 
+      // Quando alguém clica para rodar a roleta, todos veem
+      socket.on("start-roulette", (data) => {
+        console.log("🎡 Roleta começou para todos!")
+        setShowRoulette(true)
+      })
+
+      // Quando alguém faz play, todos fazem play
+      socket.on("room-play", (data) => {
+        console.log("▶️ Play sincronizado:", data.currentTime)
+        if (playerRef && playerRef.current) {
+          playerRef.current.seekTo(data.currentTime)
+          playerRef.current.playVideo()
+        }
+        setIsPlaying(true)
+      })
+
+      // Quando alguém pausa, todos pausam
+      socket.on("room-pause", (data) => {
+        console.log("⏸️ Pause sincronizado:", data.currentTime)
+        if (playerRef && playerRef.current) {
+          playerRef.current.seekTo(data.currentTime)
+          playerRef.current.pauseVideo()
+        }
+        setIsPlaying(false)
+        setElapsedTime(data.currentTime)
+      })
+
+      // Resposta de sincronização de tempo
+      socket.on("sync-time-response", (data) => {
+        console.log("⏱️ Sincronizando tempo:", data.currentTime)
+        if (playerRef && playerRef.current) {
+          const currentTime = playerRef.current.getCurrentTime()
+          const diff = Math.abs(currentTime - data.currentTime)
+          
+          // Se estiver fora de 1 segundo, ressincroniza
+          if (diff > 1) {
+            console.log(`⚠️ Dessincronia de ${diff.toFixed(2)}s, ressincronizando...`)
+            playerRef.current.seekTo(data.currentTime)
+          }
+          
+          if (!data.isPlaying && isPlaying) {
+            playerRef.current.pauseVideo()
+            setIsPlaying(false)
+          } else if (data.isPlaying && !isPlaying) {
+            playerRef.current.playVideo()
+            setIsPlaying(true)
+          }
+        }
+      })
+
       setListenersSetup(true)
     }
 
@@ -82,7 +135,7 @@ function Room() {
       // Cleanup apenas se desmontar
       // Não remover listeners aqui para evitar duplicatas
     }
-  }, [listenersSetup, roomCode, socket, setQueue, setCurrentVideo])
+  }, [listenersSetup, roomCode, socket, setQueue, setCurrentVideo, playerRef, isPlaying])
 
   async function search(query) {
   try {
@@ -101,6 +154,28 @@ function Room() {
     alert("Erro ao buscar vídeos")
   }
 }
+
+  // Callback quando o estado de play/pause do player muda
+  function handlePlayStateChange(state, currentTime) {
+    console.log(`Player state changed: ${state} at ${currentTime}s`)
+    
+    if (state === 'play') {
+      socket.emit('player-play', { currentTime })
+    } else if (state === 'pause') {
+      socket.emit('player-pause', { currentTime })
+    }
+  }
+
+  // Sincronizar tempo a cada 5 segundos
+  useEffect(() => {
+    if (!currentVideo || !roomCode) return
+
+    const interval = setInterval(() => {
+      socket.emit('sync-time')
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [currentVideo, roomCode, socket])
 
   function addVideo(video) {
     const videoData = {
@@ -137,13 +212,12 @@ function Room() {
       alert("Nenhuma música na fila!")
       return
     }
-    setShowRoulette(true)
+    // Emitir para o servidor que alguém quer rodar a roleta
+    // O servidor vai notificar TODOS na sala
+    socket.emit("spin-wheel", roomCode)
   }
 
   function handleSpinComplete(selectedIndex) {
-    // Emitir evento para o servidor girar
-    socket.emit("spin-wheel", roomCode)
-    
     // Fechar roleta após 2 segundos
     setTimeout(() => {
       setShowRoulette(false)
@@ -188,7 +262,7 @@ function Room() {
 
       <button onClick={spin}>🎡 Girar Roleta</button>
 
-      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} />}
+      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} onPlayStateChange={handlePlayStateChange} onPlayerReady={setPlayerRef} />}
 
       {showRoulette && (
         <Roulette 

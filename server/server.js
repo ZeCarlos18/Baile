@@ -22,6 +22,9 @@ app.get('/', (req, res) => {
 // Armazenar salas e suas filas
 const rooms = new Map();
 
+// Sincronização de tempo a cada 10 segundos
+const syncIntervals = new Map();
+
 // Gerar código de sala aleatório
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -39,6 +42,8 @@ io.on('connection', (socket) => {
       queue: [],
       currentVideo: null,
       videoStartTime: null, // Timestamp de quando começou a tocar
+      isPlaying: false, // Se está tocando ou pausado
+      pausedAt: 0, // Tempo em que foi pausado
       currentIndex: 0,
       users: [socket.id]
     };
@@ -68,12 +73,16 @@ io.on('connection', (socket) => {
         elapsedTime = (Date.now() - room.videoStartTime) / 1000; // em segundos
       }
 
-      io.to(roomCode).emit('user-joined', {
+      // Enviar dados APENAS para o usuário que entrou, não para todos
+      socket.emit('user-joined', {
         userCount: room.users.length,
         queue: room.queue,
         currentVideo: room.currentVideo,
         elapsedTime: elapsedTime // Tempo em segundos
       });
+      
+      // Notificar outros que um novo usuário entrou
+      socket.broadcast.to(roomCode).emit('user-count-updated', room.users.length);
     } else {
       socket.emit('room-error', 'Sala não encontrada');
     }
@@ -145,6 +154,11 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
 
     if (room && room.queue.length > 0) {
+      // Primeiro, notificar TODOS que a roleta vai começar
+      io.to(roomCode).emit('start-roulette', {
+        queue: room.queue
+      });
+
       const randomIndex = Math.floor(Math.random() * room.queue.length);
       room.currentVideo = room.queue[randomIndex]
       room.videoStartTime = Date.now() // Armazenar o tempo de início
@@ -161,6 +175,56 @@ io.on('connection', (socket) => {
       io.to(roomCode).emit('update-queue', room.queue) // Atualiza a fila
     } else {
       console.log(`❌ Não há vídeos na fila para girar em ${roomCode}`)
+    }
+  });
+
+  // Play - quando alguém começa a tocar
+  socket.on('player-play', (data) => {
+    const room = rooms.get(socket.roomCode);
+    if (room) {
+      room.isPlaying = true;
+      room.videoStartTime = Date.now() - (data.currentTime * 1000); // Ajusta o tempo de início
+      
+      console.log(`▶️ Play na sala ${socket.roomCode}`);
+      // Emitir para TODOS inclusive quem clicou (para sincronizar)
+      io.to(socket.roomCode).emit('room-play', {
+        currentTime: data.currentTime
+      });
+    }
+  });
+
+  // Pause - quando alguém pausa
+  socket.on('player-pause', (data) => {
+    const room = rooms.get(socket.roomCode);
+    if (room) {
+      room.isPlaying = false;
+      room.pausedAt = data.currentTime;
+      
+      console.log(`⏸️ Pause na sala ${socket.roomCode}`);
+      // Emitir para TODOS
+      io.to(socket.roomCode).emit('room-pause', {
+        currentTime: data.currentTime
+      });
+    }
+  });
+
+  // Sync periódico - mantém o tempo sincronizado
+  socket.on('sync-time', () => {
+    const room = rooms.get(socket.roomCode);
+    if (room && room.currentVideo) {
+      let elapsedTime = 0;
+      
+      if (room.isPlaying && room.videoStartTime) {
+        elapsedTime = (Date.now() - room.videoStartTime) / 1000;
+      } else if (!room.isPlaying) {
+        elapsedTime = room.pausedAt;
+      }
+      
+      // Enviar tempo correto para quem pediu
+      socket.emit('sync-time-response', {
+        currentTime: elapsedTime,
+        isPlaying: room.isPlaying
+      });
     }
   });
 

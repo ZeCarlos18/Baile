@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 
 let apiLoaded = false
 
-export function usePlayer(videoId, onVideoEnd, startTime = 0) {
+export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange) {
   const playerRef = useRef(null)
 
   useEffect(() => {
@@ -41,7 +41,17 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0) {
               },
               onStateChange: (event) => {
                 // 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
-                if (event.data === window.YT.PlayerState.ENDED) {
+                if (event.data === window.YT.PlayerState.PLAYING) {
+                  console.log("▶️ Vídeo tocando")
+                  if (onPlayStateChange) {
+                    onPlayStateChange('play', event.target.getCurrentTime())
+                  }
+                } else if (event.data === window.YT.PlayerState.PAUSED) {
+                  console.log("⏸️ Vídeo pausado")
+                  if (onPlayStateChange) {
+                    onPlayStateChange('pause', event.target.getCurrentTime())
+                  }
+                } else if (event.data === window.YT.PlayerState.ENDED) {
                   console.log("⏹️ Vídeo terminou")
                   if (onVideoEnd) {
                     onVideoEnd()
@@ -69,7 +79,7 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0) {
     return () => {
       clearInterval(waitForApi)
     }
-  }, [videoId, onVideoEnd, startTime])
+  }, [videoId, onVideoEnd, startTime, onPlayStateChange])
 
   return playerRef
 }
