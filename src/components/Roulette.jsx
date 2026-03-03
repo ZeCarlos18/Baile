@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react"
 import "../styles/Roulette.css"
 
-function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
+function Roulette({ 
+  queue, 
+  selectedIndex, 
+  selectedVideo, 
+  onSpinComplete,
+  isVoting = false,
+  votesCount = 0,
+  totalUsers = 0,
+  votesNeeded = 0,
+  hasVoted = false,
+  onVote
+}) {
   const [rotation, setRotation] = useState(0)
   const [displayVideo, setDisplayVideo] = useState(null)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -11,10 +22,10 @@ function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
   const itemAngle = itemsCount > 0 ? 360 / itemsCount : 0
 
   useEffect(() => {
-    if (hasClickedSpin && !isAnimating && selectedIndex !== null && selectedVideo) {
+    if (!isVoting && hasClickedSpin && !isAnimating && selectedIndex !== null && selectedVideo) {
       spinRoulette()
     }
-  }, [hasClickedSpin, selectedIndex, selectedVideo])
+  }, [hasClickedSpin, selectedIndex, selectedVideo, isVoting, isAnimating])
 
   function spinRoulette() {
     setIsAnimating(true)
@@ -33,7 +44,15 @@ function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
   }
 
   function handleClickSpin() {
-    setHasClickedSpin(true)
+    if (!isVoting) {
+      setHasClickedSpin(true)
+    }
+  }
+
+  function handleVote() {
+    if (onVote && !hasVoted) {
+      onVote()
+    }
   }
 
   if (itemsCount === 0) {
@@ -114,7 +133,31 @@ function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
           </svg>
         </div>
 
-        {!hasClickedSpin && !isAnimating && (
+        {isVoting && (
+          <div className="roulette-voting-section">
+            <div className="voting-counter">
+              <h3>Votos: {votesCount}/{votesNeeded}</h3>
+              <p className="total-users">Usuários na sala: {totalUsers}</p>
+            </div>
+            
+            {!hasVoted && (
+              <button 
+                onClick={handleVote}
+                className="vote-button"
+              >
+                ✓ Votar para Rodar
+              </button>
+            )}
+            
+            {hasVoted && (
+              <div className="waiting-votes">
+                <p>⏳ Aguardando mais votos...</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isVoting && !hasClickedSpin && !isAnimating && (
           <button 
             onClick={handleClickSpin}
             className="roulette-spin-button"
@@ -125,7 +168,7 @@ function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
 
         {!isAnimating && displayVideo && (
           <div className="roulette-result">
-            <h2>🎉 Próximo: </h2>
+            <h2>Próxima Musica: </h2>
             <p>{displayVideo.title}</p>
           </div>
         )}

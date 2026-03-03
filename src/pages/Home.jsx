@@ -12,11 +12,9 @@ function Home() {
     console.log("🔄 Criando nova sala...")
     socket.emit("create-room")
     
-    // Listener único para room-created
     socket.once("room-created", (code) => {
       console.log("✅ Sala criada com código:", code)
       setRoomCode(code)
-      // Usar navigate ao invés de window.location.href para manter o contexto
       navigate(`/room/${code}`)
     })
   }

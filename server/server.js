@@ -34,7 +34,11 @@ io.on('connection', (socket) => {
       videoStartTime: null,
       isPlaying: false,
       pausedAt: 0,
-      users: [socket.id]
+      users: [socket.id],
+      rouletteVotes: new Set(),
+      isRouletteVoting: false,
+      selectedRouletteVideo: null,
+      selectedRouletteIndex: null
     };
 
     rooms.set(roomCode, room);
@@ -111,6 +115,78 @@ io.on('connection', (socket) => {
     if (room && index >= 0 && index < room.queue.length) {
       room.queue.splice(index, 1);
       io.to(socket.roomCode).emit('update-queue', room.queue);
+    }
+  });
+
+  socket.on('request-roulette', (roomCode) => {
+    const room = rooms.get(roomCode);
+
+    if (room && room.queue.length > 0) {
+      room.isRouletteVoting = true;
+      room.rouletteVotes.clear();
+      room.rouletteVotes.add(socket.id);
+
+      const randomIndex = Math.floor(Math.random() * room.queue.length);
+      room.selectedRouletteVideo = room.queue[randomIndex];
+      room.selectedRouletteIndex = randomIndex;
+
+      const queueSnapshot = [...room.queue];
+      const votesCount = room.rouletteVotes.size;
+      const totalUsers = room.users.length;
+      const votesNeeded = Math.ceil(totalUsers * 0.5);
+
+      io.to(roomCode).emit('roulette-voting-started', {
+        queue: queueSnapshot,
+        selectedIndex: randomIndex,
+        selectedVideo: room.selectedRouletteVideo,
+        votesCount: votesCount,
+        totalUsers: totalUsers,
+        votesNeeded: votesNeeded
+      });
+    }
+  });
+
+  socket.on('vote-roulette', (roomCode) => {
+    const room = rooms.get(roomCode);
+
+    if (room && room.isRouletteVoting) {
+      room.rouletteVotes.add(socket.id);
+
+      const votesCount = room.rouletteVotes.size;
+      const totalUsers = room.users.length;
+      const votesNeeded = Math.ceil(totalUsers * 0.5);
+
+      io.to(roomCode).emit('roulette-votes-updated', {
+        votesCount: votesCount,
+        totalUsers: totalUsers,
+        votesNeeded: votesNeeded
+      });
+
+      if (votesCount >= votesNeeded) {
+        room.isRouletteVoting = false;
+
+        const selectedVideo = room.selectedRouletteVideo;
+        const selectedIndex = room.selectedRouletteIndex;
+        const queueSnapshot = [...room.queue];
+
+        io.to(roomCode).emit('start-roulette', {
+          queue: queueSnapshot,
+          selectedIndex: selectedIndex,
+          selectedVideo: selectedVideo
+        });
+
+        setTimeout(() => {
+          room.currentVideo = selectedVideo;
+          room.videoStartTime = Date.now();
+          room.queue.splice(selectedIndex, 1);
+
+          io.to(roomCode).emit('play-video', { 
+            video: room.currentVideo,
+            elapsedTime: 0 
+          });
+          io.to(roomCode).emit('update-queue', room.queue);
+        }, 3000);
+      }
     }
   });
 

@@ -31,6 +31,11 @@ function Room() {
   const [selectedRouletteIndex, setSelectedRouletteIndex] = useState(null)
   const [selectedRouletteVideo, setSelectedRouletteVideo] = useState(null)
   const [rouletteQueueSnapshot, setRouletteQueueSnapshot] = useState(null)
+  const [isVoting, setIsVoting] = useState(false)
+  const [votesCount, setVotesCount] = useState(0)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const [votesNeeded, setVotesNeeded] = useState(0)
+  const [hasVoted, setHasVoted] = useState(false)
 
   useEffect(() => {
     if (code && !roomCode) {
@@ -68,11 +73,31 @@ function Room() {
         setIsPlaying(true)
       })
 
+      socket.on("roulette-voting-started", (data) => {
+        setSelectedRouletteIndex(data.selectedIndex)
+        setSelectedRouletteVideo(data.selectedVideo)
+        setRouletteQueueSnapshot(data.queue)
+        setVotesCount(data.votesCount)
+        setTotalUsers(data.totalUsers)
+        setVotesNeeded(data.votesNeeded)
+        setIsVoting(true)
+        setShowRoulette(true)
+        setHasVoted(true)
+      })
+
+      socket.on("roulette-votes-updated", (data) => {
+        setVotesCount(data.votesCount)
+        setTotalUsers(data.totalUsers)
+        setVotesNeeded(data.votesNeeded)
+      })
+
       socket.on("start-roulette", (data) => {
         setSelectedRouletteIndex(data.selectedIndex)
         setSelectedRouletteVideo(data.selectedVideo)
         setRouletteQueueSnapshot(data.queue)
+        setIsVoting(false)
         setShowRoulette(true)
+        setHasVoted(false)
       })
 
       socket.on("sync-time-response", (data) => {
@@ -154,7 +179,7 @@ function Room() {
       return
     }
     
-    socket.emit("spin-wheel", roomCode)
+    socket.emit("request-roulette", roomCode)
   }
 
   function handleSpinComplete(selectedIndex) {
@@ -203,6 +228,16 @@ function Room() {
           selectedIndex={selectedRouletteIndex}
           selectedVideo={selectedRouletteVideo}
           onSpinComplete={handleSpinComplete}
+          isVoting={isVoting}
+          votesCount={votesCount}
+          totalUsers={totalUsers}
+          votesNeeded={votesNeeded}
+          hasVoted={hasVoted}
+          roomCode={roomCode}
+          onVote={() => {
+            setHasVoted(true)
+            socket.emit("vote-roulette", roomCode)
+          }}
         />
       )}
     </div>
