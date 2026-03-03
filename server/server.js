@@ -173,12 +173,12 @@ io.on('connection', (socket) => {
       if (room) {
         room.users = room.users.filter(id => id !== socket.id);
 
-        // Se sala ficar vazia, deletar
-        if (room.users.length === 0) {
-          rooms.delete(socket.roomCode);
-          console.log(`Sala ${socket.roomCode} deletada (vazia)`);
-        } else {
+        // Notificar outros usuários na sala
+        if (room.users.length > 0) {
           io.to(socket.roomCode).emit('user-left', room.users.length);
+          console.log(`Usuário saiu da sala ${socket.roomCode}. Usuários restantes: ${room.users.length}`);
+        } else {
+          console.log(`Sala ${socket.roomCode} vazia, mas mantida para futuras conexões`);
         }
       }
     }
