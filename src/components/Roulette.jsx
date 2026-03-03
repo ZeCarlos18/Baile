@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import "../styles/Roulette.css"
 
-function Roulette({ queue, selectedIndex, onSpinComplete }) {
+function Roulette({ queue, selectedIndex, selectedVideo, onSpinComplete }) {
   const [rotation, setRotation] = useState(0)
-  const [displayIndex, setDisplayIndex] = useState(null)
+  const [displayVideo, setDisplayVideo] = useState(null)
   const [isAnimating, setIsAnimating] = useState(false)
   const [hasClickedSpin, setHasClickedSpin] = useState(false)
 
@@ -11,10 +11,10 @@ function Roulette({ queue, selectedIndex, onSpinComplete }) {
   const itemAngle = 360 / itemsCount
 
   useEffect(() => {
-    if (hasClickedSpin && !isAnimating && selectedIndex !== null) {
+    if (hasClickedSpin && !isAnimating && selectedIndex !== null && selectedVideo) {
       spinRoulette()
     }
-  }, [hasClickedSpin, selectedIndex])
+  }, [hasClickedSpin, selectedIndex, selectedVideo])
 
   function spinRoulette() {
     setIsAnimating(true)
@@ -24,7 +24,7 @@ function Roulette({ queue, selectedIndex, onSpinComplete }) {
     const finalRotation = randomSpins * 360 + (360 - targetRotation)
     
     setRotation(finalRotation)
-    setDisplayIndex(selectedIndex)
+    setDisplayVideo(selectedVideo)
 
     setTimeout(() => {
       setIsAnimating(false)
@@ -123,10 +123,10 @@ function Roulette({ queue, selectedIndex, onSpinComplete }) {
           </button>
         )}
 
-        {!isAnimating && displayIndex !== null && (
+        {!isAnimating && displayVideo && (
           <div className="roulette-result">
             <h2>🎉 Próximo: </h2>
-            <p>{queue[displayIndex]?.title}</p>
+            <p>{displayVideo.title}</p>
           </div>
         )}
       </div>

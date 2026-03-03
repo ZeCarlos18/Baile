@@ -123,7 +123,8 @@ io.on('connection', (socket) => {
 
       io.to(roomCode).emit('start-roulette', {
         queue: room.queue,
-        selectedIndex: randomIndex
+        selectedIndex: randomIndex,
+        selectedVideo: selectedVideo
       });
 
       setTimeout(() => {
