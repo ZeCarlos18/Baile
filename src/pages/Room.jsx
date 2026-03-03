@@ -84,27 +84,6 @@ function Room() {
         setShowRoulette(true)
       })
 
-      // Quando alguém faz play, todos fazem play
-      socket.on("room-play", (data) => {
-        console.log("▶️ Play sincronizado:", data.currentTime)
-        if (playerRef && playerRef.current) {
-          playerRef.current.seekTo(data.currentTime)
-          playerRef.current.playVideo()
-        }
-        setIsPlaying(true)
-      })
-
-      // Quando alguém pausa, todos pausam
-      socket.on("room-pause", (data) => {
-        console.log("⏸️ Pause sincronizado:", data.currentTime)
-        if (playerRef && playerRef.current) {
-          playerRef.current.seekTo(data.currentTime)
-          playerRef.current.pauseVideo()
-        }
-        setIsPlaying(false)
-        setElapsedTime(data.currentTime)
-      })
-
       // Resposta de sincronização de tempo
       socket.on("sync-time-response", (data) => {
         console.log("⏱️ Sincronizando tempo:", data.currentTime)
@@ -112,18 +91,10 @@ function Room() {
           const currentTime = playerRef.current.getCurrentTime()
           const diff = Math.abs(currentTime - data.currentTime)
           
-          // Se estiver fora de 1 segundo, ressincroniza
-          if (diff > 1) {
+          // Se estiver fora de 1.5 segundos, ressincroniza apenas o tempo
+          if (diff > 1.5) {
             console.log(`⚠️ Dessincronia de ${diff.toFixed(2)}s, ressincronizando...`)
             playerRef.current.seekTo(data.currentTime)
-          }
-          
-          if (!data.isPlaying && isPlaying) {
-            playerRef.current.pauseVideo()
-            setIsPlaying(false)
-          } else if (data.isPlaying && !isPlaying) {
-            playerRef.current.playVideo()
-            setIsPlaying(true)
           }
         }
       })
@@ -155,16 +126,7 @@ function Room() {
   }
 }
 
-  // Callback quando o estado de play/pause do player muda
-  function handlePlayStateChange(state, currentTime) {
-    console.log(`Player state changed: ${state} at ${currentTime}s`)
-    
-    if (state === 'play') {
-      socket.emit('player-play', { currentTime })
-    } else if (state === 'pause') {
-      socket.emit('player-pause', { currentTime })
-    }
-  }
+
 
   // Sincronizar tempo a cada 5 segundos
   useEffect(() => {
@@ -262,7 +224,7 @@ function Room() {
 
       <button onClick={spin}>🎡 Girar Roleta</button>
 
-      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} onPlayStateChange={handlePlayStateChange} onPlayerReady={setPlayerRef} />}
+      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} onPlayerReady={setPlayerRef} />}
 
       {showRoulette && (
         <Roulette 

@@ -4,7 +4,6 @@ let apiLoaded = false
 
 export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange) {
   const playerRef = useRef(null)
-  const lastPlayPauseEmitRef = useRef({ state: null, time: 0 }) // Rastrear último play/pause emitido
 
   useEffect(() => {
     // Carregar YouTube API apenas uma vez
@@ -42,35 +41,10 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
               },
               onStateChange: (event) => {
                 // 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
-                const currentState = event.data === window.YT.PlayerState.PLAYING ? 'play' : 
-                                   event.data === window.YT.PlayerState.PAUSED ? 'pause' : null
-                
-                if (currentState === 'play') {
+                if (event.data === window.YT.PlayerState.PLAYING) {
                   console.log("▶️ Vídeo tocando")
-                  const now = Date.now()
-                  // Só emitir se o último play foi há mais de 300ms
-                  if (lastPlayPauseEmitRef.current.state !== 'play' || (now - lastPlayPauseEmitRef.current.time) > 300) {
-                    console.log("📤 Emitindo play para servidor")
-                    if (onPlayStateChange) {
-                      onPlayStateChange('play', event.target.getCurrentTime())
-                    }
-                    lastPlayPauseEmitRef.current = { state: 'play', time: now }
-                  } else {
-                    console.log("⏭️ Ignorando play (cooldown ativo)")
-                  }
-                } else if (currentState === 'pause') {
+                } else if (event.data === window.YT.PlayerState.PAUSED) {
                   console.log("⏸️ Vídeo pausado")
-                  const now = Date.now()
-                  // Só emitir se o último pause foi há mais de 300ms
-                  if (lastPlayPauseEmitRef.current.state !== 'pause' || (now - lastPlayPauseEmitRef.current.time) > 300) {
-                    console.log("📤 Emitindo pause para servidor")
-                    if (onPlayStateChange) {
-                      onPlayStateChange('pause', event.target.getCurrentTime())
-                    }
-                    lastPlayPauseEmitRef.current = { state: 'pause', time: now }
-                  } else {
-                    console.log("⏭️ Ignorando pause (cooldown ativo)")
-                  }
                 } else if (event.data === window.YT.PlayerState.ENDED) {
                   console.log("⏹️ Vídeo terminou")
                   if (onVideoEnd) {

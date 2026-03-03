@@ -178,36 +178,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Play - quando alguém começa a tocar
-  socket.on('player-play', (data) => {
-    const room = rooms.get(socket.roomCode);
-    if (room) {
-      room.isPlaying = true;
-      room.videoStartTime = Date.now() - (data.currentTime * 1000); // Ajusta o tempo de início
-      
-      console.log(`▶️ Play na sala ${socket.roomCode}`);
-      // Emitir para TODOS EXCETO quem clicou (usa broadcast)
-      socket.broadcast.to(socket.roomCode).emit('room-play', {
-        currentTime: data.currentTime
-      });
-    }
-  });
-
-  // Pause - quando alguém pausa
-  socket.on('player-pause', (data) => {
-    const room = rooms.get(socket.roomCode);
-    if (room) {
-      room.isPlaying = false;
-      room.pausedAt = data.currentTime;
-      
-      console.log(`⏸️ Pause na sala ${socket.roomCode}`);
-      // Emitir para TODOS EXCETO quem clicou
-      socket.broadcast.to(socket.roomCode).emit('room-pause', {
-        currentTime: data.currentTime
-      });
-    }
-  });
-
   // Sync periódico - mantém o tempo sincronizado
   socket.on('sync-time', () => {
     const room = rooms.get(socket.roomCode);
