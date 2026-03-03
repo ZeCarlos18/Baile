@@ -25,6 +25,7 @@ function Room() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenersSetup, setListenersSetup] = useState(false)
   const [showRoulette, setShowRoulette] = useState(false)
+  const [elapsedTime, setElapsedTime] = useState(0) // Tempo decorrido do vídeo
 
   // Setar roomCode do URL
   useEffect(() => {
@@ -52,6 +53,7 @@ function Room() {
         console.log("👥 Novo usuário na sala:", data)
         setQueue(data.queue)
         setCurrentVideo(data.currentVideo)
+        setElapsedTime(data.elapsedTime || 0)
         if (data.currentVideo) {
           setIsPlaying(true)
         }
@@ -62,9 +64,14 @@ function Room() {
         setQueue(newQueue)
       })
       
-      socket.on("play-video", (video) => {
-        console.log("▶️ Recebido play-video:", video)
+      socket.on("play-video", (data) => {
+        // Pode vir como objeto {video, elapsedTime} ou só o vídeo
+        const video = data.video || data
+        const elapsed = data.elapsedTime || 0
+        
+        console.log("▶️ Recebido play-video:", video, "Tempo:", elapsed)
         setCurrentVideo(video)
+        setElapsedTime(elapsed)
         setIsPlaying(true)
       })
 
@@ -181,7 +188,7 @@ function Room() {
 
       <button onClick={spin}>🎡 Girar Roleta</button>
 
-      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} />}
+      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} />}
 
       {showRoulette && (
         <Roulette 

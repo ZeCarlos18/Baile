@@ -38,6 +38,7 @@ io.on('connection', (socket) => {
       code: roomCode,
       queue: [],
       currentVideo: null,
+      videoStartTime: null, // Timestamp de quando começou a tocar
       currentIndex: 0,
       users: [socket.id]
     };
@@ -60,10 +61,18 @@ io.on('connection', (socket) => {
       room.users.push(socket.id);
 
       console.log(`Usuário ${socket.id} entrou na sala ${roomCode}`);
+      
+      // Calcular tempo decorrido do vídeo atual
+      let elapsedTime = 0;
+      if (room.currentVideo && room.videoStartTime) {
+        elapsedTime = (Date.now() - room.videoStartTime) / 1000; // em segundos
+      }
+
       io.to(roomCode).emit('user-joined', {
         userCount: room.users.length,
         queue: room.queue,
-        currentVideo: room.currentVideo
+        currentVideo: room.currentVideo,
+        elapsedTime: elapsedTime // Tempo em segundos
       });
     } else {
       socket.emit('room-error', 'Sala não encontrada');
@@ -84,8 +93,12 @@ io.on('connection', (socket) => {
       if (playNow && !room.currentVideo) {
         // Se pedir para tocar agora e não há vídeo tocando, toca este
         room.currentVideo = video
+        room.videoStartTime = Date.now() // Armazenar o tempo de início
         console.log(`▶️ Tocando vídeo imediatamente na sala ${roomCode}: ${video.title}`)
-        io.to(roomCode).emit('play-video', room.currentVideo)
+        io.to(roomCode).emit('play-video', { 
+          video: room.currentVideo,
+          elapsedTime: 0 
+        })
       } else {
         // Caso contrário, adiciona à fila/roleta
         room.queue.push(video)
@@ -104,9 +117,13 @@ io.on('connection', (socket) => {
     if (room && room.queue.length > 0) {
       // Pega o primeiro da fila se houver
       room.currentVideo = room.queue.shift() // Remove e pega o primeiro
+      room.videoStartTime = Date.now() // Armazenar o tempo de início
       
       console.log(`⏭️ Próximo vídeo na sala ${socket.roomCode}: ${room.currentVideo.title}`)
-      io.to(socket.roomCode).emit('play-video', room.currentVideo)
+      io.to(socket.roomCode).emit('play-video', { 
+        video: room.currentVideo,
+        elapsedTime: 0 
+      })
       io.to(socket.roomCode).emit('update-queue', room.queue)
     }
   });
@@ -130,13 +147,17 @@ io.on('connection', (socket) => {
     if (room && room.queue.length > 0) {
       const randomIndex = Math.floor(Math.random() * room.queue.length);
       room.currentVideo = room.queue[randomIndex]
+      room.videoStartTime = Date.now() // Armazenar o tempo de início
       
       // Remove o vídeo da fila já que está tocando
       room.queue.splice(randomIndex, 1)
       room.currentIndex = 0
 
       console.log(`🎡 Roulette acionada na sala ${roomCode}. Tocando: ${room.currentVideo.title}`)
-      io.to(roomCode).emit('play-video', room.currentVideo)
+      io.to(roomCode).emit('play-video', { 
+        video: room.currentVideo,
+        elapsedTime: 0 
+      })
       io.to(roomCode).emit('update-queue', room.queue) // Atualiza a fila
     } else {
       console.log(`❌ Não há vídeos na fila para girar em ${roomCode}`)

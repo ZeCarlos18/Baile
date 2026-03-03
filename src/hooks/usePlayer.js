@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 
 let apiLoaded = false
 
-export function usePlayer(videoId, onVideoEnd) {
+export function usePlayer(videoId, onVideoEnd, startTime = 0) {
   const playerRef = useRef(null)
 
   useEffect(() => {
@@ -32,6 +32,11 @@ export function usePlayer(videoId, onVideoEnd) {
             events: {
               onReady: (event) => {
                 console.log("▶️ Player pronto, tocando:", videoId)
+                // Se houver tempo decorrido, pular para esse tempo
+                if (startTime && startTime > 0) {
+                  console.log(`⏩ Pulando para ${startTime}s`)
+                  event.target.seekTo(startTime)
+                }
                 event.target.playVideo()
               },
               onStateChange: (event) => {
@@ -49,6 +54,11 @@ export function usePlayer(videoId, onVideoEnd) {
           // Se player já existe, apenas troca o vídeo
           console.log("🔄 Trocando vídeo para:", videoId)
           playerRef.current.cueVideoById(videoId)
+          // Pular para o tempo correto
+          if (startTime && startTime > 0) {
+            console.log(`⏩ Pulando para ${startTime}s`)
+            playerRef.current.seekTo(startTime)
+          }
           playerRef.current.playVideo()
         }
       } catch (error) {
@@ -59,7 +69,7 @@ export function usePlayer(videoId, onVideoEnd) {
     return () => {
       clearInterval(waitForApi)
     }
-  }, [videoId, onVideoEnd])
+  }, [videoId, onVideoEnd, startTime])
 
   return playerRef
 }
