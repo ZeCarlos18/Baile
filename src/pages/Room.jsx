@@ -47,6 +47,16 @@ function Room() {
     if (!listenersSetup && roomCode) {
       console.log("🔌 Configurando listeners para sala:", roomCode)
       
+      // Quando entra em uma sala existente, sincroniza os dados
+      socket.on("user-joined", (data) => {
+        console.log("👥 Novo usuário na sala:", data)
+        setQueue(data.queue)
+        setCurrentVideo(data.currentVideo)
+        if (data.currentVideo) {
+          setIsPlaying(true)
+        }
+      })
+      
       socket.on("update-queue", (newQueue) => {
         console.log("📊 Fila atualizada:", newQueue)
         setQueue(newQueue)
