@@ -118,13 +118,16 @@ function Room() {
           // Se estiver fora de 1 segundo, ressincroniza
           if (diff > 1) {
             console.log(`⚠️ Dessincronia de ${diff.toFixed(2)}s, ressincronizando...`)
+            setRemoteCommand()
             playerRef.current.seekTo(data.currentTime)
           }
           
           if (!data.isPlaying && isPlaying) {
+            setRemoteCommand()
             playerRef.current.pauseVideo()
             setIsPlaying(false)
           } else if (data.isPlaying && !isPlaying) {
+            setRemoteCommand()
             playerRef.current.playVideo()
             setIsPlaying(true)
           }
