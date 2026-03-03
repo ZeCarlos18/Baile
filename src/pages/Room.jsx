@@ -22,7 +22,6 @@ function Room() {
 
   const socket = useSocket()
   const playerInstanceRef = useRef(null) // Referência ao player instance
-  const isProcessingRemoteCommandRef = useRef(false) // Flag para ignorar eventos locais durante comandos remotos
   const [results, setResults] = useState([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenersSetup, setListenersSetup] = useState(false)
@@ -88,36 +87,22 @@ function Room() {
       // Quando alguém faz play, todos fazem play
       socket.on("room-play", (data) => {
         console.log("▶️ Play sincronizado:", data.currentTime)
-        isProcessingRemoteCommandRef.current = true
-        
         if (playerRef && playerRef.current) {
           playerRef.current.seekTo(data.currentTime)
           playerRef.current.playVideo()
         }
         setIsPlaying(true)
-        
-        // Limpar a flag após 500ms para evitar race conditions
-        setTimeout(() => {
-          isProcessingRemoteCommandRef.current = false
-        }, 500)
       })
 
       // Quando alguém pausa, todos pausam
       socket.on("room-pause", (data) => {
         console.log("⏸️ Pause sincronizado:", data.currentTime)
-        isProcessingRemoteCommandRef.current = true
-        
         if (playerRef && playerRef.current) {
           playerRef.current.seekTo(data.currentTime)
           playerRef.current.pauseVideo()
         }
         setIsPlaying(false)
         setElapsedTime(data.currentTime)
-        
-        // Limpar a flag após 500ms
-        setTimeout(() => {
-          isProcessingRemoteCommandRef.current = false
-        }, 500)
       })
 
       // Resposta de sincronização de tempo
@@ -172,12 +157,6 @@ function Room() {
 
   // Callback quando o estado de play/pause do player muda
   function handlePlayStateChange(state, currentTime) {
-    // Ignorar se estamos processando um comando remoto
-    if (isProcessingRemoteCommandRef.current) {
-      console.log(`⏭️ Ignorando evento local (processando comando remoto): ${state}`)
-      return
-    }
-
     console.log(`Player state changed: ${state} at ${currentTime}s`)
     
     if (state === 'play') {

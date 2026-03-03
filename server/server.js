@@ -186,8 +186,8 @@ io.on('connection', (socket) => {
       room.videoStartTime = Date.now() - (data.currentTime * 1000); // Ajusta o tempo de início
       
       console.log(`▶️ Play na sala ${socket.roomCode}`);
-      // Emitir para TODOS inclusive quem clicou (para sincronizar)
-      io.to(socket.roomCode).emit('room-play', {
+      // Emitir para TODOS EXCETO quem clicou (usa broadcast)
+      socket.broadcast.to(socket.roomCode).emit('room-play', {
         currentTime: data.currentTime
       });
     }
@@ -201,8 +201,8 @@ io.on('connection', (socket) => {
       room.pausedAt = data.currentTime;
       
       console.log(`⏸️ Pause na sala ${socket.roomCode}`);
-      // Emitir para TODOS
-      io.to(socket.roomCode).emit('room-pause', {
+      // Emitir para TODOS EXCETO quem clicou
+      socket.broadcast.to(socket.roomCode).emit('room-pause', {
         currentTime: data.currentTime
       });
     }
