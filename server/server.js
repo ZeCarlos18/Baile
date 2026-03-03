@@ -118,21 +118,25 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
 
     if (room && room.queue.length > 0) {
+      const randomIndex = Math.floor(Math.random() * room.queue.length);
+      const selectedVideo = room.queue[randomIndex];
+
       io.to(roomCode).emit('start-roulette', {
-        queue: room.queue
+        queue: room.queue,
+        selectedIndex: randomIndex
       });
 
-      const randomIndex = Math.floor(Math.random() * room.queue.length);
-      room.currentVideo = room.queue[randomIndex]
-      room.videoStartTime = Date.now()
-      
-      room.queue.splice(randomIndex, 1)
+      setTimeout(() => {
+        room.currentVideo = selectedVideo;
+        room.videoStartTime = Date.now();
+        room.queue.splice(randomIndex, 1);
 
-      io.to(roomCode).emit('play-video', { 
-        video: room.currentVideo,
-        elapsedTime: 0 
-      })
-      io.to(roomCode).emit('update-queue', room.queue)
+        io.to(roomCode).emit('play-video', { 
+          video: room.currentVideo,
+          elapsedTime: 0 
+        });
+        io.to(roomCode).emit('update-queue', room.queue);
+      }, 3000);
     }
   });
 

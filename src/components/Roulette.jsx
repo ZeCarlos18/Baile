@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import "../styles/Roulette.css"
 
-function Roulette({ queue, onSpinComplete }) {
+function Roulette({ queue, selectedIndex, onSpinComplete }) {
   const [rotation, setRotation] = useState(0)
-  const [selectedIndex, setSelectedIndex] = useState(null)
+  const [displayIndex, setDisplayIndex] = useState(null)
   const [isAnimating, setIsAnimating] = useState(false)
   const [hasClickedSpin, setHasClickedSpin] = useState(false)
 
@@ -11,28 +11,24 @@ function Roulette({ queue, onSpinComplete }) {
   const itemAngle = 360 / itemsCount
 
   useEffect(() => {
-    if (hasClickedSpin && !isAnimating) {
+    if (hasClickedSpin && !isAnimating && selectedIndex !== null) {
       spinRoulette()
     }
-  }, [hasClickedSpin])
+  }, [hasClickedSpin, selectedIndex])
 
   function spinRoulette() {
     setIsAnimating(true)
 
     const randomSpins = Math.floor(Math.random() * 10) + 5
-    const randomOffset = Math.floor(Math.random() * itemAngle)
-    const finalRotation = randomSpins * 360 + randomOffset
+    const targetRotation = selectedIndex * itemAngle
+    const finalRotation = randomSpins * 360 + (360 - targetRotation)
     
     setRotation(finalRotation)
-
-    const normalizedRotation = finalRotation % 360
-    const selectedIdx = Math.floor((360 - normalizedRotation) / itemAngle) % itemsCount
-    
-    setSelectedIndex(selectedIdx)
+    setDisplayIndex(selectedIndex)
 
     setTimeout(() => {
       setIsAnimating(false)
-      onSpinComplete(selectedIdx)
+      onSpinComplete(selectedIndex)
     }, 3000)
   }
 
@@ -127,10 +123,10 @@ function Roulette({ queue, onSpinComplete }) {
           </button>
         )}
 
-        {!isAnimating && selectedIndex !== null && (
+        {!isAnimating && displayIndex !== null && (
           <div className="roulette-result">
             <h2>🎉 Próximo: </h2>
-            <p>{queue[selectedIndex]?.title}</p>
+            <p>{queue[displayIndex]?.title}</p>
           </div>
         )}
       </div>
