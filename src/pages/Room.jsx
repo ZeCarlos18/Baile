@@ -2,6 +2,7 @@ import { useContext, useEffect, useState, useRef } from "react"
 import { useParams } from "react-router-dom"
 import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
+import { setRemoteCommand } from "../hooks/usePlayer"
 import Player from "../components/Player"
 import SearchBar from "../components/SearchBar"
 import QueueList from "../components/QueueList"
@@ -88,6 +89,7 @@ function Room() {
       socket.on("room-play", (data) => {
         console.log("▶️ Play sincronizado:", data.currentTime)
         if (playerRef && playerRef.current) {
+          setRemoteCommand() // Avisar que é comando remoto
           playerRef.current.seekTo(data.currentTime)
           playerRef.current.playVideo()
         }
@@ -98,6 +100,7 @@ function Room() {
       socket.on("room-pause", (data) => {
         console.log("⏸️ Pause sincronizado:", data.currentTime)
         if (playerRef && playerRef.current) {
+          setRemoteCommand() // Avisar que é comando remoto
           playerRef.current.seekTo(data.currentTime)
           playerRef.current.pauseVideo()
         }

@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react"
 
 let apiLoaded = false
+let isRemoteCommandRef = { current: false } // Flag global para rastrear comandos remotos
+
+// Função para avisar que está fazendo um comando remoto
+export function setRemoteCommand() {
+  isRemoteCommandRef.current = true
+}
 
 export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange) {
   const playerRef = useRef(null)
@@ -41,6 +47,13 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
               },
               onStateChange: (event) => {
                 // 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
+                if (isRemoteCommandRef.current) {
+                  // Se é um comando remoto, não emitir novamente
+                  console.log("🔄 State change causado por comando remoto, ignorando emissão")
+                  isRemoteCommandRef.current = false
+                  return
+                }
+
                 if (event.data === window.YT.PlayerState.PLAYING) {
                   console.log("▶️ Vídeo tocando")
                   if (onPlayStateChange) {
