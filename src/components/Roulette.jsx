@@ -10,7 +10,6 @@ function Roulette({ queue, onSpinComplete }) {
   const itemsCount = queue.length
   const itemAngle = 360 / itemsCount
 
-  // Só inicia quando o usuário clica no botão
   useEffect(() => {
     if (hasClickedSpin && !isAnimating) {
       spinRoulette()
@@ -20,20 +19,17 @@ function Roulette({ queue, onSpinComplete }) {
   function spinRoulette() {
     setIsAnimating(true)
 
-    // Calcular qual item vai ficar no topo
-    const randomSpins = Math.floor(Math.random() * 10) + 5 // 5-15 voltas completas
+    const randomSpins = Math.floor(Math.random() * 10) + 5
     const randomOffset = Math.floor(Math.random() * itemAngle)
     const finalRotation = randomSpins * 360 + randomOffset
     
     setRotation(finalRotation)
 
-    // Calcular índice baseado na rotação final
     const normalizedRotation = finalRotation % 360
     const selectedIdx = Math.floor((360 - normalizedRotation) / itemAngle) % itemsCount
     
     setSelectedIndex(selectedIdx)
 
-    // Esperar a animação terminar (3 segundos)
     setTimeout(() => {
       setIsAnimating(false)
       onSpinComplete(selectedIdx)
@@ -57,10 +53,8 @@ function Roulette({ queue, onSpinComplete }) {
     <div className="roulette-overlay">
       <div className="roulette-container">
         <div className="roulette-inner">
-          {/* Agulha/ponteiro no topo */}
           <div className="roulette-pointer"></div>
 
-          {/* Roleta */}
           <svg
             className={`roulette-wheel ${isAnimating ? "spinning" : ""}`}
             style={{ transform: `rotate(${rotation}deg)` }}
@@ -86,7 +80,6 @@ function Roulette({ queue, onSpinComplete }) {
                 "Z"
               ].join(" ")
 
-              // Calcular posição do texto
               const textAngle = (index + 0.5) * itemAngle - 90
               const textRadius = 130
               const textX = 200 + textRadius * Math.cos(textAngle * (Math.PI / 180))
@@ -120,13 +113,11 @@ function Roulette({ queue, onSpinComplete }) {
               )
             })}
 
-            {/* Centro da roleta */}
             <circle cx="200" cy="200" r="25" fill="#fff" stroke="white" strokeWidth="2" />
             <circle cx="200" cy="200" r="15" fill="#333" />
           </svg>
         </div>
 
-        {/* Botão Rodar */}
         {!hasClickedSpin && !isAnimating && (
           <button 
             onClick={handleClickSpin}
@@ -136,7 +127,6 @@ function Roulette({ queue, onSpinComplete }) {
           </button>
         )}
 
-        {/* Texto do resultado */}
         {!isAnimating && selectedIndex !== null && (
           <div className="roulette-result">
             <h2>🎉 Próximo: </h2>
@@ -149,3 +139,4 @@ function Roulette({ queue, onSpinComplete }) {
 }
 
 export default Roulette
+

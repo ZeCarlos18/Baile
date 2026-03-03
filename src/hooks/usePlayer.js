@@ -6,7 +6,6 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
   const playerRef = useRef(null)
 
   useEffect(() => {
-    // Carregar YouTube API apenas uma vez
     if (!apiLoaded) {
       const tag = document.createElement("script")
       tag.src = "https://www.youtube.com/iframe_api"
@@ -14,7 +13,6 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
       apiLoaded = true
     }
 
-    // Aguardar API estar pronta
     const waitForApi = setInterval(() => {
       if (window.YT && window.YT.Player) {
         clearInterval(waitForApi)
@@ -31,22 +29,17 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
             videoId: videoId,
             events: {
               onReady: (event) => {
-                console.log("▶️ Player pronto, tocando:", videoId)
-                // Se houver tempo decorrido, pular para esse tempo
                 if (startTime && startTime > 0) {
-                  console.log(`⏩ Pulando para ${startTime}s`)
                   event.target.seekTo(startTime)
                 }
                 event.target.playVideo()
               },
               onStateChange: (event) => {
-                // 0 = ENDED, 1 = PLAYING, 2 = PAUSED, 3 = BUFFERING, 5 = CUED
                 if (event.data === window.YT.PlayerState.PLAYING) {
-                  console.log("▶️ Vídeo tocando")
+                  console.log("Playing")
                 } else if (event.data === window.YT.PlayerState.PAUSED) {
-                  console.log("⏸️ Vídeo pausado")
+                  console.log("Paused")
                 } else if (event.data === window.YT.PlayerState.ENDED) {
-                  console.log("⏹️ Vídeo terminou")
                   if (onVideoEnd) {
                     onVideoEnd()
                   }
@@ -55,18 +48,14 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0, onPlayStateChange)
             }
           })
         } else {
-          // Se player já existe, apenas troca o vídeo
-          console.log("🔄 Trocando vídeo para:", videoId)
           playerRef.current.cueVideoById(videoId)
-          // Pular para o tempo correto
           if (startTime && startTime > 0) {
-            console.log(`⏩ Pulando para ${startTime}s`)
             playerRef.current.seekTo(startTime)
           }
           playerRef.current.playVideo()
         }
       } catch (error) {
-        console.error("❌ Erro ao inicializar player:", error)
+        console.error("Error initializing player:", error)
       }
     }
 

@@ -13,9 +13,7 @@ export function AuthProvider({ children }) {
     setError(null)
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/token`, { code })
-      // Salva o access_token retornado pelo backend
       localStorage.setItem('token', response.data.access_token)
-      // Opcional: buscar dados do usuário aqui usando o token
       return response.data
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao fazer login')
