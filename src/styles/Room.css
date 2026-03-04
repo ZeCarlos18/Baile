@@ -350,8 +350,8 @@
   transform: scale(0.95);
 }
 
-/* Botão Girar Roleta */
-.btn-spin-roulette {
+/* Botão Escolher Próxima Música */
+.btn-choose-music {
   width: 100%;
   padding: 20px;
   margin-top: 20px;
@@ -373,7 +373,7 @@
   letter-spacing: 1px;
 }
 
-.btn-spin-roulette::before {
+.btn-choose-music::before {
   content: "";
   position: absolute;
   top: 0;
@@ -384,50 +384,33 @@
   transition: left 0.5s;
 }
 
-.btn-spin-roulette:hover:not(:disabled) {
+.btn-choose-music:hover:not(:disabled) {
   transform: translateY(-5px);
   box-shadow: 0 15px 40px rgba(240, 87, 108, 0.5);
   background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
 }
 
-.btn-spin-roulette:hover:not(:disabled)::before {
+.btn-choose-music:hover:not(:disabled)::before {
   left: 100%;
 }
 
-.btn-spin-roulette:active:not(:disabled) {
+.btn-choose-music:active:not(:disabled) {
   transform: translateY(-2px);
 }
 
-.btn-spin-roulette:disabled {
+.btn-choose-music:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.spin-icon {
+.choose-icon {
   font-size: 24px;
-  animation: spin 3s linear infinite;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.btn-spin-roulette:not(:disabled) .spin-icon {
-  animation: spin 3s linear infinite;
-}
-
-.btn-spin-roulette:disabled .spin-icon {
-  animation: none;
-}
-
-.spin-text {
+.choose-text {
   font-size: 18px;
 }
+
 
 /* Responsivo */
 @media (max-width: 1024px) {

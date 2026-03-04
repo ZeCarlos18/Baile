@@ -5,7 +5,7 @@ import { useSocket } from "../hooks/useSocket"
 import Player from "../components/Player"
 import SearchBar from "../components/SearchBar"
 import QueueList from "../components/QueueList"
-import Roulette from "../components/Roulette"
+import CardDeck from "../components/CardDeck"
 import ShareRoom from "../components/ShareRoom"
 import "../styles/Room.css"
 
@@ -26,17 +26,9 @@ function Room() {
   const [results, setResults] = useState([])
   const [isPlaying, setIsPlaying] = useState(false)
   const [listenersSetup, setListenersSetup] = useState(false)
-  const [showRoulette, setShowRoulette] = useState(false)
+  const [showCards, setShowCards] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const [playerRef, setPlayerRef] = useState(null)
-  const [selectedRouletteIndex, setSelectedRouletteIndex] = useState(null)
-  const [selectedRouletteVideo, setSelectedRouletteVideo] = useState(null)
-  const [rouletteQueueSnapshot, setRouletteQueueSnapshot] = useState(null)
-  const [isVoting, setIsVoting] = useState(false)
-  const [votesCount, setVotesCount] = useState(0)
-  const [totalUsers, setTotalUsers] = useState(0)
-  const [votesNeeded, setVotesNeeded] = useState(0)
-  const [hasVoted, setHasVoted] = useState(false)
 
   useEffect(() => {
     if (code && !roomCode) {
@@ -72,32 +64,6 @@ function Room() {
         setCurrentVideo(video)
         setElapsedTime(elapsed)
         setIsPlaying(true)
-      })
-
-      socket.on("roulette-voting-started", (data) => {
-        setSelectedRouletteIndex(data.selectedIndex)
-        setSelectedRouletteVideo(data.selectedVideo)
-        setRouletteQueueSnapshot(data.queue)
-        setVotesCount(data.votesCount)
-        setTotalUsers(data.totalUsers)
-        setVotesNeeded(data.votesNeeded)
-        setIsVoting(true)
-        setShowRoulette(true)
-      })
-
-      socket.on("roulette-votes-updated", (data) => {
-        setVotesCount(data.votesCount)
-        setTotalUsers(data.totalUsers)
-        setVotesNeeded(data.votesNeeded)
-      })
-
-      socket.on("start-roulette", (data) => {
-        setSelectedRouletteIndex(data.selectedIndex)
-        setSelectedRouletteVideo(data.selectedVideo)
-        setRouletteQueueSnapshot(data.queue)
-        setIsVoting(false)
-        setShowRoulette(true)
-        setHasVoted(false)
       })
 
       socket.on("sync-time-response", (data) => {
@@ -167,37 +133,24 @@ function Room() {
     }
   }
 
-  function spin() {
+  function requestCards() {
     if (queue.length === 0) {
       alert("Nenhuma música na fila!")
       return
     }
     
-    if (queue.length === 1) {
-      const video = queue[0]
-      socket.emit("next-video")
-      return
-    }
-    
-    setHasVoted(true)
-    socket.emit("request-roulette", roomCode)
+    setShowCards(true)
+    socket.emit("request-cards", roomCode)
   }
 
-  function handleSpinComplete(selectedIndex) {
-    setTimeout(() => {
-      setShowRoulette(false)
-    }, 2000)
-  }
-
-  function handleCloseRoulette() {
-    setShowRoulette(false)
-    setHasVoted(false)
+  function handleCardClose() {
+    setShowCards(false)
   }
 
   function handleVideoEnd() {
     if (queue && queue.length > 0) {
       setTimeout(() => {
-        spin()
+        requestCards()
       }, 1000)
     } else {
       setIsPlaying(false)
@@ -264,35 +217,24 @@ function Room() {
               <QueueList queue={queue} />
               
               <button 
-                className="btn-spin-roulette"
-                onClick={spin}
+                className="btn-choose-music"
+                onClick={requestCards}
                 disabled={queue.length === 0}
               >
-                <span className="spin-icon">🎡</span>
-                <span className="spin-text">Girar Roleta</span>
+                <span className="choose-icon">🎴</span>
+                <span className="choose-text">Escolher Próxima</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {showRoulette && (
-        <Roulette 
-          queue={rouletteQueueSnapshot} 
-          selectedIndex={selectedRouletteIndex}
-          selectedVideo={selectedRouletteVideo}
-          onSpinComplete={handleSpinComplete}
-          isVoting={isVoting}
-          votesCount={votesCount}
-          totalUsers={totalUsers}
-          votesNeeded={votesNeeded}
-          hasVoted={hasVoted}
+      {showCards && (
+        <CardDeck 
+          queue={queue}
           roomCode={roomCode}
-          onClose={handleCloseRoulette}
-          onVote={() => {
-            setHasVoted(true)
-            socket.emit("vote-roulette", roomCode)
-          }}
+          onCardSelected={() => setShowCards(false)}
+          onClose={handleCardClose}
         />
       )}
     </div>

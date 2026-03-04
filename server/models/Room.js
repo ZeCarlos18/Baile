@@ -7,10 +7,6 @@ export class Room {
     this.isPlaying = false;
     this.pausedAt = 0;
     this.users = [];
-    this.rouletteVotes = new Set();
-    this.isRouletteVoting = false;
-    this.selectedRouletteVideo = null;
-    this.selectedRouletteIndex = null;
   }
 
   addUser(userId) {
@@ -50,51 +46,6 @@ export class Room {
     return false;
   }
 
-  startRouletteVoting(userVotingId) {
-    this.isRouletteVoting = true;
-    this.rouletteVotes.clear();
-    this.rouletteVotes.add(userVotingId);
-
-    const randomIndex = Math.floor(Math.random() * this.queue.length);
-    this.selectedRouletteVideo = this.queue[randomIndex];
-    this.selectedRouletteIndex = randomIndex;
-
-    return {
-      selectedIndex: randomIndex,
-      selectedVideo: this.selectedRouletteVideo,
-      votesCount: this.rouletteVotes.size,
-      votesNeeded: this.getVotesNeeded()
-    };
-  }
-
-  addRouletteVote(userId) {
-    this.rouletteVotes.add(userId);
-    return {
-      votesCount: this.rouletteVotes.size,
-      votesNeeded: this.getVotesNeeded(),
-      isMajority: this.rouletteVotes.size >= this.getVotesNeeded()
-    };
-  }
-
-  getVotesNeeded() {
-    return Math.ceil(this.getUserCount() * 0.5);
-  }
-
-  playSelectedRoulette() {
-    if (this.selectedRouletteVideo && this.selectedRouletteIndex !== null) {
-      const video = this.selectedRouletteVideo;
-      const index = this.selectedRouletteIndex;
-
-      this.queue.splice(index, 1);
-      this.currentVideo = video;
-      this.videoStartTime = Date.now();
-      this.isRouletteVoting = false;
-
-      return video;
-    }
-    return null;
-  }
-
   getElapsedTime() {
     if (!this.currentVideo || !this.videoStartTime) {
       return 0;
@@ -107,24 +58,36 @@ export class Room {
     return this.pausedAt;
   }
 
-  spinWheel() {
+  // Novo sistema de cartas
+  createCardDeck() {
     if (this.queue.length === 0) {
       return null;
     }
 
-    const randomIndex = Math.floor(Math.random() * this.queue.length);
-    const selectedVideo = this.queue[randomIndex];
+    // Embaralha a fila para criar ordem aleatória das cartas
+    const shuffledQueue = [...this.queue];
+    for (let i = shuffledQueue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]];
+    }
 
-    return {
-      selectedIndex: randomIndex,
-      selectedVideo: selectedVideo
-    };
+    // Cria arranjo de cartas com índices originais
+    const cards = shuffledQueue.map(video => {
+      const originalIndex = this.queue.findIndex(v => v.id === video.id);
+      return {
+        id: video.id,
+        originalIndex: originalIndex,
+        video: video
+      };
+    });
+
+    return cards;
   }
 
-  playSpinnedVideo(index) {
-    if (index >= 0 && index < this.queue.length) {
-      const video = this.queue[index];
-      this.queue.splice(index, 1);
+  playCardSelection(originalIndex) {
+    if (originalIndex >= 0 && originalIndex < this.queue.length) {
+      const video = this.queue[originalIndex];
+      this.queue.splice(originalIndex, 1);
       this.currentVideo = video;
       this.videoStartTime = Date.now();
       return video;

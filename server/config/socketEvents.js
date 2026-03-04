@@ -1,11 +1,11 @@
 import { RoomController } from '../controllers/RoomController.js';
 import { QueueController } from '../controllers/QueueController.js';
-import { RouletteController } from '../controllers/RouletteController.js';
+import { CardController } from '../controllers/CardController.js';
 
 export function setupSocketEvents(io, roomService) {
   const roomController = new RoomController(roomService);
   const queueController = new QueueController(roomService);
-  const rouletteController = new RouletteController(roomService);
+  const cardController = new CardController(roomService);
 
   io.on('connection', (socket) => {
     // Room Events
@@ -30,21 +30,17 @@ export function setupSocketEvents(io, roomService) {
       queueController.removeVideo(socket, io, index);
     });
 
-    // Roulette Events
-    socket.on('request-roulette', (roomCode) => {
-      rouletteController.requestRoulette(socket, io, roomCode);
+    // Card Events
+    socket.on('request-cards', (roomCode) => {
+      cardController.requestCards(socket, io, roomCode);
     });
 
-    socket.on('vote-roulette', (roomCode) => {
-      rouletteController.voteRoulette(socket, io, roomCode);
-    });
-
-    socket.on('spin-wheel', (roomCode) => {
-      rouletteController.spinWheel(socket, io, roomCode);
+    socket.on('select-card', (data) => {
+      cardController.selectCard(socket, io, data);
     });
 
     socket.on('sync-time', () => {
-      rouletteController.syncTime(socket);
+      cardController.syncTime(socket);
     });
 
     // Disconnect Event
