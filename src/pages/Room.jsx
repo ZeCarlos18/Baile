@@ -106,15 +106,22 @@ function Room() {
         setElapsedTime(elapsed)
         setIsPlaying(true)
         
-        // Atualiza fila pessoal APENAS se foi o próprio usuário que selecionou
+        // Se foi o próprio usuário que selecionou, usar a fila atualizada do backend
         if (data.selectedByUserId === userId && data.userQueue) {
-          console.log(`✅ [Frontend] MATCH! Atualizando fila pessoal de ${userId}`)
+          console.log(`✅ [Frontend] Você selecionou! Atualizando fila pessoal`)
           console.log(`📝 [Frontend] Fila atualizada: ${data.userQueue.length} música(s)`)
           setQueue(data.userQueue)
-          // Salva no localStorage
           localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.userQueue))
-        } else if (data.selectedByUserId !== userId) {
-          console.log(`⏭️ [Frontend] Não é a fila deste usuário (${data.selectedByUserId} !== ${userId})`)
+        } else {
+          // Se foi outro usuário que selecionou, remover a MESMA música da sua fila
+          console.log(`⏭️ [Frontend] Outro usuário selecionou. Removendo essa música de sua fila.`)
+          setQueue(prevQueue => {
+            const videoId = video.id
+            const newQueue = prevQueue.filter(v => v.id !== videoId)
+            console.log(`🗑️ [Frontend] Música removida: ${prevQueue.length} ➜ ${newQueue.length} música(s)`)
+            localStorage.setItem(`queue_${roomCode}`, JSON.stringify(newQueue))
+            return newQueue
+          })
         }
       })
 
