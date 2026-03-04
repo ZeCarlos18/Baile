@@ -189,6 +189,11 @@ function Room() {
     }, 2000)
   }
 
+  function handleCloseRoulette() {
+    setShowRoulette(false)
+    setHasVoted(false)
+  }
+
   function handleVideoEnd() {
     if (queue && queue.length > 0) {
       setTimeout(() => {
@@ -283,6 +288,7 @@ function Room() {
           votesNeeded={votesNeeded}
           hasVoted={hasVoted}
           roomCode={roomCode}
+          onClose={handleCloseRoulette}
           onVote={() => {
             setHasVoted(true)
             socket.emit("vote-roulette", roomCode)

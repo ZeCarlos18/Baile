@@ -30,6 +30,36 @@
   animation: slideUp 0.4s ease-out;
 }
 
+.roulette-close-btn {
+  position: absolute;
+  top: -50px;
+  right: 0;
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+  font-weight: bold;
+  z-index: 1001;
+}
+
+.roulette-close-btn:hover {
+  transform: scale(1.15) rotate(90deg);
+  box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
+}
+
+.roulette-close-btn:active {
+  transform: scale(0.95);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;

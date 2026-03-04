@@ -11,7 +11,8 @@ function Roulette({
   totalUsers = 0,
   votesNeeded = 0,
   hasVoted = false,
-  onVote
+  onVote,
+  onClose
 }) {
   const [rotation, setRotation] = useState(0)
   const [displayVideo, setDisplayVideo] = useState(null)
@@ -67,6 +68,14 @@ function Roulette({
   return (
     <div className="roulette-overlay">
       <div className="roulette-container">
+        <button 
+          className="roulette-close-btn"
+          onClick={onClose}
+          title="Voltar para a sala"
+        >
+          ✕
+        </button>
+
         <div className="roulette-inner">
           <div className="roulette-pointer"></div>
 
