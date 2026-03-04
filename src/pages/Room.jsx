@@ -7,6 +7,7 @@ import SearchBar from "../components/SearchBar"
 import QueueList from "../components/QueueList"
 import Roulette from "../components/Roulette"
 import ShareRoom from "../components/ShareRoom"
+import "../styles/Room.css"
 
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
@@ -200,27 +201,75 @@ function Room() {
   }
 
   return (
-    <div>
-      <h2>Sala: {roomCode}</h2>
+    <div className="room-container">
+      <div className="room-background"></div>
+      
+      <div className="room-content">
+        <header className="room-header">
+          <h1 className="room-title">🎵 Baile</h1>
+          <h2 className="room-code">Sala: <span>{roomCode}</span></h2>
+        </header>
 
-      <ShareRoom roomCode={roomCode} />
+        <div className="room-grid">
+          {/* Coluna Esquerda - Busca e Lista de Resultados */}
+          <div className="room-left">
+            <ShareRoom roomCode={roomCode} />
 
-      <SearchBar onSearch={search} />
+            <div className="search-section">
+              <h3 className="section-title">🔍 Buscar Música</h3>
+              <SearchBar onSearch={search} />
+            </div>
 
-      <ul>
-        {results.map((v) => (
-          <li key={v.id.videoId}>
-            {v.snippet.title}
-            <button onClick={() => addVideo(v)}>Adicionar</button>
-          </li>
-        ))}
-      </ul>
+            {results.length > 0 && (
+              <div className="results-section">
+                <h3 className="section-title">Resultados ({results.length})</h3>
+                <ul className="results-list">
+                  {results.map((v) => (
+                    <li key={v.id.videoId} className="result-item">
+                      <div className="result-info">
+                        <p className="result-title">{v.snippet.title}</p>
+                      </div>
+                      <button 
+                        className="btn-add-video"
+                        onClick={() => addVideo(v)}
+                      >
+                        ➕ Adicionar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
-      <QueueList queue={queue} />
+          {/* Coluna Direita - Player e Fila */}
+          <div className="room-right">
+            {currentVideo && (
+              <div className="player-section">
+                <Player 
+                  videoId={currentVideo.id} 
+                  onVideoEnd={handleVideoEnd} 
+                  startTime={elapsedTime} 
+                  onPlayerReady={setPlayerRef} 
+                />
+              </div>
+            )}
 
-      <button onClick={spin}>🎡 Girar Roleta</button>
-
-      {currentVideo && <Player videoId={currentVideo.id} onVideoEnd={handleVideoEnd} startTime={elapsedTime} onPlayerReady={setPlayerRef} />}
+            <div className="queue-section">
+              <QueueList queue={queue} />
+              
+              <button 
+                className="btn-spin-roulette"
+                onClick={spin}
+                disabled={queue.length === 0}
+              >
+                <span className="spin-icon">🎡</span>
+                <span className="spin-text">Girar Roleta</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {showRoulette && (
         <Roulette 

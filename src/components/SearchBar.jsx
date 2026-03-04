@@ -1,16 +1,36 @@
 import { useState } from "react"
+import "../styles/SearchMusic.css"
 
 function SearchBar({ onSearch }) {
   const [query, setQuery] = useState("")
 
+  const handleSearch = () => {
+    if (query.trim()) {
+      onSearch(query)
+    }
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   return (
-    <div>
+    <div className="search-bar-container">
       <input
-        placeholder="Buscar música"
+        className="search-input"
+        placeholder="Digite o nome da música..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        onKeyPress={handleKeyPress}
       />
-      <button onClick={() => onSearch(query)}>Buscar</button>
+      <button 
+        className="search-btn"
+        onClick={handleSearch}
+      >
+        🔍 Buscar
+      </button>
     </div>
   )
 }
