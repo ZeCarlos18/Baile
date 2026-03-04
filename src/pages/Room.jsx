@@ -53,10 +53,30 @@ function Room() {
         console.log(`📊 [Frontend] Fila pessoal recebida: ${data.queue ? data.queue.length : 0} música(s)`);
         console.log(`📊 [Frontend] Fila global recebida: ${data.globalQueue ? data.globalQueue.length : 0} música(s)`);
         
-        if (data.queue && Array.isArray(data.queue)) {
-          setQueue(data.queue);
-          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
-          console.log(`💾 [Frontend] Fila pessoal salva no localStorage`);
+        // Verificar se há fila salva no localStorage (de um reload anterior)
+        const savedQueue = localStorage.getItem(`queue_${roomCode}`);
+        
+        if (savedQueue) {
+          try {
+            const parsedQueue = JSON.parse(savedQueue);
+            console.log(`🔄 [Frontend] Restaurando fila do localStorage: ${parsedQueue.length} música(s)`);
+            setQueue(parsedQueue);
+          } catch (e) {
+            console.error(`❌ [Frontend] Erro ao restaurar fila do localStorage:`, e);
+            // Se falhar, usar a do servidor
+            if (data.queue && Array.isArray(data.queue)) {
+              setQueue(data.queue);
+              localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
+              console.log(`💾 [Frontend] Usando fila do servidor`);
+            }
+          }
+        } else {
+          // Primeira vez nesta sala - usar fila do servidor
+          if (data.queue && Array.isArray(data.queue)) {
+            setQueue(data.queue);
+            localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
+            console.log(`💾 [Frontend] Fila do servidor salva no localStorage`);
+          }
         }
       })
       
