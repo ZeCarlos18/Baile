@@ -25,10 +25,10 @@ export class RoomController {
     socket.roomCode = roomCode;
     room.addUser(socket.id);
 
-    // Envia apenas a fila global, sem vídeo inicial (Opção B: cada usuário tem seu próprio vídeo)
+    // Envia a fila pessoal do usuário (cópia da fila global no momento da entrada)
     socket.emit('user-joined', {
       userCount: room.getUserCount(),
-      queue: room.queue
+      queue: room.getUserQueue(socket.id)
     });
 
     io.to(roomCode).emit('user-count-updated', room.getUserCount());

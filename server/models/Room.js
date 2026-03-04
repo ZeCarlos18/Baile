@@ -1,7 +1,8 @@
 export class Room {
   constructor(code) {
     this.code = code;
-    this.queue = [];
+    this.globalQueue = []; // Fila global - base para novos usuários
+    this.userQueues = {}; // { userId: [] } - cópia pessoal de cada usuário
     this.userCurrentVideos = {}; // { userId: { video, videoStartTime } }
     this.users = [];
   }
@@ -9,6 +10,8 @@ export class Room {
   addUser(userId) {
     if (!this.users.includes(userId)) {
       this.users.push(userId);
+      // Novo usuário recebe uma cópia da fila global
+      this.userQueues[userId] = [...this.globalQueue];
       return true;
     }
     return false;
@@ -16,6 +19,8 @@ export class Room {
 
   removeUser(userId) {
     this.users = this.users.filter(id => id !== userId);
+    delete this.userQueues[userId];
+    delete this.userCurrentVideos[userId];
   }
 
   getUserCount() {
@@ -23,7 +28,18 @@ export class Room {
   }
 
   addVideo(video) {
-    this.queue.push(video);
+    // Adiciona à fila global
+    this.globalQueue.push(video);
+    
+    // E também a TODAS as filas pessoais dos usuários conectados
+    for (const userId in this.userQueues) {
+      this.userQueues[userId].push(video);
+    }
+  }
+
+  // Obter fila pessoal do usuário
+  getUserQueue(userId) {
+    return this.userQueues[userId] || [];
   }
 
   getUserCurrentVideo(userId) {
@@ -31,19 +47,23 @@ export class Room {
   }
 
   playCardSelection(userId, originalIndex) {
-    if (originalIndex >= 0 && originalIndex < this.queue.length) {
-      const video = this.queue[originalIndex];
-      
-      // NÃO remove da fila - permite que outros usuários escolham a mesma música
-      // Cada usuário tem sua própria reprodução independente
-      this.userCurrentVideos[userId] = {
-        video: video,
-        videoStartTime: Date.now()
-      };
-      
-      return video;
+    const userQueue = this.userQueues[userId];
+    
+    if (!userQueue || originalIndex < 0 || originalIndex >= userQueue.length) {
+      return null;
     }
-    return null;
+
+    const video = userQueue[originalIndex];
+    // Remove da FILA PESSOAL do usuário
+    userQueue.splice(originalIndex, 1);
+    
+    // Armazenar vídeo individual para este usuário
+    this.userCurrentVideos[userId] = {
+      video: video,
+      videoStartTime: Date.now()
+    };
+    
+    return video;
   }
 
   removeUserVideo(userId) {
@@ -51,13 +71,15 @@ export class Room {
   }
 
   // Sistema de cartas
-  createCardDeck() {
-    if (this.queue.length === 0) {
+  createCardDeck(userId) {
+    const userQueue = this.userQueues[userId];
+    
+    if (!userQueue || userQueue.length === 0) {
       return null;
     }
 
-    // Embaralha a fila para criar ordem aleatória das cartas
-    const shuffledQueue = [...this.queue];
+    // Embaralha a fila pessoal para criar ordem aleatória das cartas
+    const shuffledQueue = [...userQueue];
     for (let i = shuffledQueue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]];
@@ -65,7 +87,7 @@ export class Room {
 
     // Cria arranjo de cartas com índices originais
     const cards = shuffledQueue.map(video => {
-      const originalIndex = this.queue.findIndex(v => v.id === video.id);
+      const originalIndex = userQueue.findIndex(v => v.id === video.id);
       return {
         id: video.id,
         originalIndex: originalIndex,

@@ -55,10 +55,16 @@ function Room() {
       socket.on("play-video", (data) => {
         const video = data.video || data
         const elapsed = data.elapsedTime || 0
+        const updatedQueue = data.queue
         
         setCurrentVideo(video)
         setElapsedTime(elapsed)
         setIsPlaying(true)
+        
+        // Atualiza fila pessoal se foi retornada (após seleção de carta)
+        if (updatedQueue) {
+          setQueue(updatedQueue)
+        }
       })
 
       socket.on("sync-time-response", (data) => {

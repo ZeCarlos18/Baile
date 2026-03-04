@@ -6,9 +6,12 @@ export class CardController {
   requestCards(socket, io, roomCode) {
     const room = this.roomService.getRoomByCode(roomCode);
 
-    if (!room || room.queue.length === 0) return;
+    if (!room) return;
 
-    const cards = room.createCardDeck();
+    const userQueue = room.getUserQueue(socket.id);
+    if (!userQueue || userQueue.length === 0) return;
+
+    const cards = room.createCardDeck(socket.id);
 
     if (!cards) return;
 
@@ -18,9 +21,10 @@ export class CardController {
       originalIndex: card.originalIndex // Guardado para quando revelar
     }));
 
+    // Envia apenas para este usuário (unicast) com sua fila pessoal
     socket.emit('cards-revealed', {
       cards: revealedCards,
-      queue: [...room.queue]
+      queue: userQueue
     });
   }
 
@@ -31,17 +35,18 @@ export class CardController {
     if (!room || !cardDetails) return;
 
     const originalIndex = cardDetails.originalIndex;
-    // Passa userId (socket.id) para armazenar vídeo separadamente por usuário
     const playedVideo = room.playCardSelection(socket.id, originalIndex);
 
     if (playedVideo) {
-      // Envia apenas para este usuário (unicast) - fila não muda, só o vídeo tocando
+      // Envia apenas para este usuário (unicast) - sua fila pessoal atualizada
       const userVideo = room.getUserCurrentVideo(socket.id);
+      const userQueue = room.getUserQueue(socket.id);
+      
       socket.emit('play-video', {
         video: userVideo.video,
-        elapsedTime: 0
+        elapsedTime: 0,
+        queue: userQueue // Fila pessoal atualizada (sem a música que acaba de escolher)
       });
-      // A fila NÃO é emitida pois permanece igual para todos
     }
   }
 
