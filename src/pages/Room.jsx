@@ -46,11 +46,6 @@ function Room() {
     if (!listenersSetup && roomCode) {
       socket.on("user-joined", (data) => {
         setQueue(data.queue)
-        setCurrentVideo(data.currentVideo)
-        setElapsedTime(data.elapsedTime || 0)
-        if (data.currentVideo) {
-          setIsPlaying(true)
-        }
       })
       
       socket.on("update-queue", (newQueue) => {
@@ -105,7 +100,7 @@ function Room() {
     if (!currentVideo || !roomCode) return
 
     const interval = setInterval(() => {
-      socket.emit('sync-time')
+      socket.emit('sync-time', { roomCode })
     }, 5000)
 
     return () => clearInterval(interval)
@@ -117,20 +112,12 @@ function Room() {
       title: video.snippet.title
     }
 
-    if (!currentVideo) {
-      setIsPlaying(true)
-      socket.emit("add-video", {
-        code: roomCode,
-        video: videoData,
-        playNow: true
-      })
-    } else {
-      socket.emit("add-video", {
-        code: roomCode,
-        video: videoData,
-        playNow: false
-      })
-    }
+    // Com Opção B, não há auto-play na adição. Usuário escolhe via cartas
+    socket.emit("add-video", {
+      code: roomCode,
+      video: videoData,
+      playNow: false
+    })
   }
 
   function requestCards() {

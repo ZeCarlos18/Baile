@@ -2,10 +2,7 @@ export class Room {
   constructor(code) {
     this.code = code;
     this.queue = [];
-    this.currentVideo = null;
-    this.videoStartTime = null;
-    this.isPlaying = false;
-    this.pausedAt = 0;
+    this.userCurrentVideos = {}; // { userId: { video, videoStartTime } }
     this.users = [];
   }
 
@@ -29,36 +26,31 @@ export class Room {
     this.queue.push(video);
   }
 
-  getNextVideo() {
-    if (this.queue.length > 0) {
-      this.currentVideo = this.queue.shift();
-      this.videoStartTime = Date.now();
-      return this.currentVideo;
+  getUserCurrentVideo(userId) {
+    return this.userCurrentVideos[userId] || null;
+  }
+
+  playCardSelection(userId, originalIndex) {
+    if (originalIndex >= 0 && originalIndex < this.queue.length) {
+      const video = this.queue[originalIndex];
+      this.queue.splice(originalIndex, 1);
+      
+      // Armazenar vídeo individual para este usuário
+      this.userCurrentVideos[userId] = {
+        video: video,
+        videoStartTime: Date.now()
+      };
+      
+      return video;
     }
     return null;
   }
 
-  removeVideoByIndex(index) {
-    if (index >= 0 && index < this.queue.length) {
-      this.queue.splice(index, 1);
-      return true;
-    }
-    return false;
+  removeUserVideo(userId) {
+    delete this.userCurrentVideos[userId];
   }
 
-  getElapsedTime() {
-    if (!this.currentVideo || !this.videoStartTime) {
-      return 0;
-    }
-
-    if (this.isPlaying) {
-      return (Date.now() - this.videoStartTime) / 1000;
-    }
-
-    return this.pausedAt;
-  }
-
-  // Novo sistema de cartas
+  // Sistema de cartas
   createCardDeck() {
     if (this.queue.length === 0) {
       return null;
@@ -84,14 +76,12 @@ export class Room {
     return cards;
   }
 
-  playCardSelection(originalIndex) {
-    if (originalIndex >= 0 && originalIndex < this.queue.length) {
-      const video = this.queue[originalIndex];
-      this.queue.splice(originalIndex, 1);
-      this.currentVideo = video;
-      this.videoStartTime = Date.now();
-      return video;
+  getElapsedTimeForUser(userId) {
+    const userVideo = this.userCurrentVideos[userId];
+    if (!userVideo) {
+      return 0;
     }
-    return null;
+
+    return (Date.now() - userVideo.videoStartTime) / 1000;
   }
 }

@@ -25,13 +25,10 @@ export class RoomController {
     socket.roomCode = roomCode;
     room.addUser(socket.id);
 
-    const elapsedTime = room.getElapsedTime();
-
+    // Envia apenas a fila global, sem vídeo inicial (Opção B: cada usuário tem seu próprio vídeo)
     socket.emit('user-joined', {
       userCount: room.getUserCount(),
-      queue: room.queue,
-      currentVideo: room.currentVideo,
-      elapsedTime: elapsedTime
+      queue: room.queue
     });
 
     io.to(roomCode).emit('user-count-updated', room.getUserCount());
@@ -43,6 +40,7 @@ export class RoomController {
       
       if (room) {
         room.removeUser(socket.id);
+        room.removeUserVideo(socket.id); // Remove vídeo do usuário do mapa
         
         if (room.getUserCount() > 0) {
           io.to(socket.roomCode).emit('user-left', room.getUserCount());

@@ -22,14 +22,6 @@ export function setupSocketEvents(io, roomService) {
       queueController.addVideo(socket, io, data);
     });
 
-    socket.on('next-video', () => {
-      queueController.nextVideo(socket, io);
-    });
-
-    socket.on('remove-video', (index) => {
-      queueController.removeVideo(socket, io, index);
-    });
-
     // Card Events
     socket.on('request-cards', (roomCode) => {
       cardController.requestCards(socket, io, roomCode);
@@ -39,8 +31,8 @@ export function setupSocketEvents(io, roomService) {
       cardController.selectCard(socket, io, data);
     });
 
-    socket.on('sync-time', () => {
-      cardController.syncTime(socket);
+    socket.on('sync-time', (data) => {
+      cardController.syncTime(socket, io, data);
     });
 
     // Disconnect Event
