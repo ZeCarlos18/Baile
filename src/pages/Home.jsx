@@ -10,11 +10,9 @@ function Home() {
   const navigate = useNavigate()
 
   function createRoom() {
-    console.log("🔄 Criando nova sala...")
     socket.emit("create-room")
     
     socket.once("room-created", (code) => {
-      console.log("✅ Sala criada com código:", code)
       setRoomCode(code)
       navigate(`/room/${code}`)
     })

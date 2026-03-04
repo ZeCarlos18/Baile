@@ -1,8 +1,8 @@
 import { usePlayer } from "../hooks/usePlayer"
 import { useEffect } from "react"
 
-function Player({ videoId, onVideoEnd, startTime, onPlayStateChange, onPlayerReady }) {
-  const playerRef = usePlayer(videoId, onVideoEnd, startTime, onPlayStateChange)
+function Player({ videoId, onVideoEnd, startTime, onPlayerReady }) {
+  const playerRef = usePlayer(videoId, onVideoEnd, startTime)
 
   useEffect(() => {
     if (playerRef.current && onPlayerReady) {
