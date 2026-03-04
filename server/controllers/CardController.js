@@ -35,15 +35,13 @@ export class CardController {
     const playedVideo = room.playCardSelection(socket.id, originalIndex);
 
     if (playedVideo) {
-      // Envia apenas para este usuário (unicast)
+      // Envia apenas para este usuário (unicast) - fila não muda, só o vídeo tocando
       const userVideo = room.getUserCurrentVideo(socket.id);
       socket.emit('play-video', {
         video: userVideo.video,
         elapsedTime: 0
       });
-
-      // Atualiza fila global para todos (broadcast)
-      io.to(roomCode).emit('update-queue', room.queue);
+      // A fila NÃO é emitida pois permanece igual para todos
     }
   }
 

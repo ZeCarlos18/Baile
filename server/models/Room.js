@@ -33,9 +33,9 @@ export class Room {
   playCardSelection(userId, originalIndex) {
     if (originalIndex >= 0 && originalIndex < this.queue.length) {
       const video = this.queue[originalIndex];
-      this.queue.splice(originalIndex, 1);
       
-      // Armazenar vídeo individual para este usuário
+      // NÃO remove da fila - permite que outros usuários escolham a mesma música
+      // Cada usuário tem sua própria reprodução independente
       this.userCurrentVideos[userId] = {
         video: video,
         videoStartTime: Date.now()
