@@ -54,7 +54,11 @@ io.on('connection', (socket) => {
     if (room) {
       socket.join(roomCode);
       socket.roomCode = roomCode;
-      room.users.push(socket.id);
+      
+      // Apenas adiciona se o usuário ainda não está na sala
+      if (!room.users.includes(socket.id)) {
+        room.users.push(socket.id);
+      }
 
       let elapsedTime = 0;
       if (room.currentVideo && room.videoStartTime) {
