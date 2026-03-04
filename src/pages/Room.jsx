@@ -13,6 +13,7 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
 function Room() {
   const { code } = useParams()
+  const { userId } = useContext(AuthContext)
   const {
     roomCode,
     setRoomCode,
@@ -21,6 +22,8 @@ function Room() {
     currentVideo,
     setCurrentVideo
   } = useContext(RoomContext)
+
+  console.log(`👤 [Room.jsx] userId carregado:`, userId)
 
   const socket = useSocket()
   const [results, setResults] = useState([])
@@ -63,6 +66,10 @@ function Room() {
       
       socket.on("play-video", (data) => {
         console.log(`▶️ [Frontend] play-video recebido:`, data.video.title)
+        console.log(`👤 [Frontend] userId atual:`, userId)
+        console.log(`👤 [Frontend] selectedByUserId do evento:`, data.selectedByUserId)
+        console.log(`📊 [Frontend] userQueue recebida:`, data.userQueue ? `${data.userQueue.length} música(s)` : 'undefined')
+        
         const video = data.video || data
         const elapsed = data.elapsedTime || 0
         
@@ -72,10 +79,13 @@ function Room() {
         
         // Atualiza fila pessoal APENAS se foi o próprio usuário que selecionou
         if (data.selectedByUserId === userId && data.userQueue) {
-          console.log(`🎴 [Frontend] Atualizando fila pessoal após seleção de carta`)
+          console.log(`✅ [Frontend] MATCH! Atualizando fila pessoal de ${userId}`)
+          console.log(`📝 [Frontend] Fila atualizada: ${data.userQueue.length} música(s)`)
           setQueue(data.userQueue)
           // Salva no localStorage
           localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.userQueue))
+        } else if (data.selectedByUserId !== userId) {
+          console.log(`⏭️ [Frontend] Não é a fila deste usuário (${data.selectedByUserId} !== ${userId})`)
         }
       })
 
@@ -130,7 +140,8 @@ function Room() {
       title: video.snippet.title
     }
 
-    console.log(`🎵 [Frontend] Emitindo add-video para sala ${roomCode}:`, videoData);
+    console.log(`🎵 [Frontend] Usuário ${userId} adicionando música:`, videoData.title);
+    console.log(`🎵 [Frontend] Para sala ${roomCode}`);
     
     // Sempre adiciona à fila global. Usuário escolhe sua música via cartas
     socket.emit("add-video", {
@@ -141,6 +152,9 @@ function Room() {
   }
 
   function requestCards() {
+    console.log(`🎴 [Frontend] Solicitando cartas para usuário ${userId} na sala ${roomCode}`)
+    console.log(`📊 [Frontend] Fila tem ${queue.length} música(s)`)
+    
     if (queue.length === 0) {
       alert("Nenhuma música na fila!")
       return

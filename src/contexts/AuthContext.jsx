@@ -1,40 +1,27 @@
-// TODO: AuthContext não está sendo utilizado no momento
-// Criado para autenticação Spotify que será implementada no futuro
-// Se não for usar em breve, considere deletar este arquivo
-
-import { createContext, useState, useCallback } from 'react'
+import { createContext, useMemo } from 'react'
 
 export const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const loginWithSpotify = useCallback(async (code) => {
-    setLoading(true)
-    setError(null)
-    try {
-      // Implementar quando authService estiver pronto
-      // const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/token`, { code })
-      // localStorage.setItem('token', response.data.access_token)
-      // return response.data
-      throw new Error('Spotify login não implementado')
-    } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao fazer login')
-      throw err
-    } finally {
-      setLoading(false)
+  // Gerar ou recuperar userId do localStorage - APENAS UMA VEZ
+  const userId = useMemo(() => {
+    let stored = localStorage.getItem('userId')
+    
+    if (!stored) {
+      console.log('🆔 [AuthContext] Gerando novo userId');
+      // Gerar novo userId: user_timestamp_randomString
+      stored = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem('userId', stored)
+      console.log('✅ [AuthContext] userId salvo no localStorage:', stored);
+    } else {
+      console.log('♻️ [AuthContext] Recuperando userId do localStorage:', stored);
     }
-  }, [])
-
-  const logout = useCallback(() => {
-    setUser(null)
-    localStorage.removeItem('token')
+    
+    return stored
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, loginWithSpotify, logout }}>
+    <AuthContext.Provider value={{ userId }}>
       {children}
     </AuthContext.Provider>
   )
