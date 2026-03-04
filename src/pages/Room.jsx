@@ -49,7 +49,15 @@ function Room() {
   useEffect(() => {
     if (!listenersSetup && roomCode) {
       socket.on("user-joined", (data) => {
-        setQueue(data.queue)
+        console.log(`✅ [Frontend] user-joined recebido:`, data);
+        console.log(`📊 [Frontend] Fila pessoal recebida: ${data.queue ? data.queue.length : 0} música(s)`);
+        console.log(`📊 [Frontend] Fila global recebida: ${data.globalQueue ? data.globalQueue.length : 0} música(s)`);
+        
+        if (data.queue && Array.isArray(data.queue)) {
+          setQueue(data.queue);
+          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
+          console.log(`💾 [Frontend] Fila pessoal salva no localStorage`);
+        }
       })
       
       socket.on("video-added", (data) => {
@@ -99,6 +107,11 @@ function Room() {
             playerRef.current.seekTo(data.currentTime)
           }
         }
+      })
+
+      socket.on("cards-revealed", (data) => {
+        console.log(`🎴 [Frontend] cards-revealed recebido:`, data);
+        console.log(`🎴 [Frontend] Cartas recebidas: ${data.cards ? data.cards.length : 0}`)
       })
 
       setListenersSetup(true)

@@ -35,6 +35,8 @@ function CardDeck({ queue, roomCode, onCardSelected, onClose }) {
   function handleCardClick(cardIndex) {
     if (revealedCards.has(cardIndex)) return; // Já foi revelada
 
+    console.log(`🎴 [CardDeck] Usuário clicou no card: ${cardIndex}`)
+
     setSelectedCard(cardIndex);
     
     // Revelar esta carta
@@ -49,6 +51,7 @@ function CardDeck({ queue, roomCode, onCardSelected, onClose }) {
 
         // Após 2 segundos, executar seleção
         setTimeout(() => {
+          console.log(`🎴 [CardDeck] Executando seleção de card: ${cardIndex}`)
           executeCardSelection(cardIndex);
         }, 2000);
       }, 1000);
@@ -59,6 +62,13 @@ function CardDeck({ queue, roomCode, onCardSelected, onClose }) {
     const card = cards.find(c => c.cardIndex === cardIndex);
     if (!card) return;
 
+    console.log(`📤 [CardDeck] Emitindo 'select-card' para roomCode: ${roomCode}`)
+    console.log(`📤 [CardDeck] Dados enviados:`, {
+      roomCode: roomCode,
+      selectedCardIndex: cardIndex,
+      videoTitle: card.video.title
+    })
+
     // Emitir evento de seleção
     socket.emit('select-card', {
       roomCode: roomCode,
@@ -68,6 +78,8 @@ function CardDeck({ queue, roomCode, onCardSelected, onClose }) {
         video: card.video
       }
     });
+
+    console.log(`✅ [CardDeck] Evento 'select-card' emitido com sucesso`)
 
     // Fechar após animação
     setTimeout(() => {

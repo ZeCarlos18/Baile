@@ -8,34 +8,45 @@ export function setupSocketEvents(io, roomService) {
   const cardController = new CardController(roomService);
 
   io.on('connection', (socket) => {
+    const userId = socket.handshake.query.userId;
+    console.log(`🔌 [Socket] Nova conexão - userId: ${userId}`);
+
     // Room Events
     socket.on('create-room', () => {
-      roomController.createRoom(socket, io);
+      console.log(`🏠 [Socket] create-room recebido de ${userId}`);
+      roomController.createRoom(socket, io, userId);
     });
 
     socket.on('join-room', (roomCode) => {
-      roomController.joinRoom(socket, io, roomCode);
+      console.log(`🚪 [Socket] join-room recebido: ${roomCode} de ${userId}`);
+      roomController.joinRoom(socket, io, roomCode, userId);
     });
 
     // Queue Events
-    socket.on('add-video', (data) => {      console.log(`📥 Socket 'add-video' recebido para sala: ${data.code || socket.roomCode}`);      queueController.addVideo(socket, io, data);
+    socket.on('add-video', (data) => {      
+      console.log(`📥 Socket 'add-video' recebido para sala: ${data.code || socket.roomCode} de ${userId}`);      
+      queueController.addVideo(socket, io, data, userId);
     });
 
     // Card Events
     socket.on('request-cards', (roomCode) => {
-      cardController.requestCards(socket, io, roomCode);
+      console.log(`🎴 [Socket] request-cards recebido: ${roomCode} de ${userId}`);
+      cardController.requestCards(socket, io, roomCode, userId);
     });
 
     socket.on('select-card', (data) => {
-      cardController.selectCard(socket, io, data);
+      console.log(`🃏 [Socket] select-card recebido de ${userId}:`, data);
+      cardController.selectCard(socket, io, data, userId);
     });
 
     socket.on('sync-time', (data) => {
-      cardController.syncTime(socket, io, data);
+      console.log(`⏱️ [Socket] sync-time recebido de ${userId}`);
+      cardController.syncTime(socket, io, data, userId);
     });
 
     // Disconnect Event
     socket.on('disconnect', () => {
+      console.log(`❌ [Socket] Desconectado - userId: ${userId}`);
       roomController.handleDisconnect(socket, roomService, io);
     });
   });
