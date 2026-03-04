@@ -218,12 +218,12 @@ function Room() {
         <div className="room-grid">
           {/* Coluna Esquerda - Busca e Lista de Resultados */}
           <div className="room-left">
-            <ShareRoom roomCode={roomCode} />
-
             <div className="search-section">
               <h3 className="section-title">🔍 Buscar Música</h3>
               <SearchBar onSearch={search} />
             </div>
+
+            <ShareRoom roomCode={roomCode} />
 
             {results.length > 0 && (
               <div className="results-section">
