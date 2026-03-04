@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
+import { AuthContext } from "../contexts/AuthContext"
 import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
 import Player from "../components/Player"

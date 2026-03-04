@@ -1,4 +1,6 @@
+import { useContext, useMemo } from 'react'
 import { io } from "socket.io-client"
+import { AuthContext } from '../contexts/AuthContext'
 
 const getServerUrl = () => {
   if (import.meta.env.VITE_SOCKET_URL) {
@@ -14,8 +16,22 @@ const getServerUrl = () => {
   return `${protocol}//${hostname}:${port}`
 }
 
-const socket = io(getServerUrl())
-
 export function useSocket() {
+  const { userId } = useContext(AuthContext)
+  
+  const socket = useMemo(() => {
+    console.log(`🔌 [useSocket] Conectando com userId:`, userId)
+    
+    return io(getServerUrl(), {
+      query: {
+        userId: userId
+      },
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5
+    })
+  }, [userId])
+  
   return socket
 }
