@@ -223,8 +223,6 @@ function Room() {
               <SearchBar onSearch={search} />
             </div>
 
-            <ShareRoom roomCode={roomCode} />
-
             {results.length > 0 && (
               <div className="results-section">
                 <h3 className="section-title">Resultados ({results.length})</h3>
@@ -245,6 +243,8 @@ function Room() {
                 </ul>
               </div>
             )}
+
+            <ShareRoom roomCode={roomCode} />
           </div>
 
           {/* Coluna Direita - Player e Fila */}
