@@ -18,8 +18,7 @@ export function setupSocketEvents(io, roomService) {
     });
 
     // Queue Events
-    socket.on('add-video', (data) => {
-      queueController.addVideo(socket, io, data);
+    socket.on('add-video', (data) => {      console.log(`📥 Socket 'add-video' recebido para sala: ${data.code || socket.roomCode}`);      queueController.addVideo(socket, io, data);
     });
 
     // Card Events

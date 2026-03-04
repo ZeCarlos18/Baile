@@ -48,22 +48,34 @@ function Room() {
         setQueue(data.queue)
       })
       
-      socket.on("update-queue", (newQueue) => {
-        setQueue(newQueue)
+      socket.on("video-added", (data) => {
+        console.log(`🎵 [Frontend] Novo vídeo adicionado:`, data.video.title);
+        // Novo vídeo foi adicionado - adiciona apenas o novo à fila pessoal
+        const { video } = data
+        setQueue(prevQueue => {
+          const newQueue = [...prevQueue, video]
+          console.log(`📝 [Frontend] Fila pessoal agora tem ${newQueue.length} música(s)`)
+          // Salva automaticamente no localStorage
+          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(newQueue))
+          return newQueue
+        })
       })
       
       socket.on("play-video", (data) => {
+        console.log(`▶️ [Frontend] play-video recebido:`, data.video.title)
         const video = data.video || data
         const elapsed = data.elapsedTime || 0
-        const updatedQueue = data.queue
         
         setCurrentVideo(video)
         setElapsedTime(elapsed)
         setIsPlaying(true)
         
-        // Atualiza fila pessoal se foi retornada (após seleção de carta)
-        if (updatedQueue) {
-          setQueue(updatedQueue)
+        // Atualiza fila pessoal APENAS se foi o próprio usuário que selecionou
+        if (data.selectedByUserId === userId && data.userQueue) {
+          console.log(`🎴 [Frontend] Atualizando fila pessoal após seleção de carta`)
+          setQueue(data.userQueue)
+          // Salva no localStorage
+          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.userQueue))
         }
       })
 
@@ -118,12 +130,14 @@ function Room() {
       title: video.snippet.title
     }
 
-    // Com Opção B, não há auto-play na adição. Usuário escolhe via cartas
+    console.log(`🎵 [Frontend] Emitindo add-video para sala ${roomCode}:`, videoData);
+    
+    // Sempre adiciona à fila global. Usuário escolhe sua música via cartas
     socket.emit("add-video", {
       code: roomCode,
       video: videoData,
       playNow: false
-    })
+    });
   }
 
   function requestCards() {

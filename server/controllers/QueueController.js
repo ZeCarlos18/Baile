@@ -3,16 +3,26 @@ export class QueueController {
     this.roomService = roomService;
   }
 
-  addVideo(socket, io, data) {
+  addVideo(socket, io, data, userId) {
     const { code, video } = data;
     const roomCode = code || socket.roomCode;
     const room = this.roomService.getRoomByCode(roomCode);
 
-    if (!room) return;
+    console.log(`🎵 [${roomCode}] Usuário ${userId} adicionou música:`, video.title);
 
-    // Opção B: Sempre adiciona à fila global, sem auto-play
-    // Cada usuário escolhe sua próxima música via cartas
+    if (!room) {
+      console.error(`❌ Sala ${roomCode} não encontrada`);
+      return;
+    }
+
+    // Sempre adiciona à fila global E a todas as filas pessoais
     room.addVideo(video);
-    io.to(roomCode).emit('update-queue', room.queue);
+    console.log(`✅ Música adicionada. Fila global agora tem ${room.globalQueue.length} música(s)`);
+    
+    // Emitir APENAS a nova música (não a lista completa)
+    io.to(roomCode).emit('video-added', {
+      video: video
+    });
+    console.log(`📡 Evento 'video-added' emitido para sala ${roomCode}`);
   }
 }
