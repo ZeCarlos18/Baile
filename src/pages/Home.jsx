@@ -21,7 +21,7 @@ function Home() {
   return (
     <div className="home-container">
       <div className="home-content">
-        <h1 className="home-title">🎵 Baile</h1>
+        <h1 className="home-title">🎵 Baralhô</h1>
         <button className="create-room-btn" onClick={createRoom}>
           Criar Sala
         </button>

@@ -1,10 +1,10 @@
-# 🎵 Baile - Sistema de Fila de Música Colaborativa
+# 🎵 Baralhô - Sistema de Fila de Música Colaborativa
 
 Uma aplicação web colaborativa em tempo real que permite criar salas compartilhadas para ouvir música com amigos, com sistema interativo de cartas para seleção da próxima música.
 
 ## 🎯 O Que É?
 
-**Baile** é uma plataforma onde você pode:
+**Baralhô** é uma plataforma onde você pode:
 - 🎤 Criar uma sala de música compartilhada
 - 🔗 Convidar amigos através de um link
 - 🔍 Buscar músicas do YouTube
@@ -86,8 +86,9 @@ npm run dev:backend     # Terminal 2 - http://localhost:3000
 ### 🔄 Recarregar a Página
 
 - Seu ID de usuário é preservado
-- Sua fila pessoal é recuperada do histórico local
-- Você volta à mesma sala
+- Você volta automaticamente à mesma sala (código na URL)
+- O servidor mantém sua fila e a música em andamento por alguns segundos
+  enquanto seu navegador reconecta, então nada é perdido
 
 ## 🏗️ Arquitetura
 
@@ -138,8 +139,8 @@ Cliente → emit 'create-room'
 ### 2️⃣ Entrada na Sala
 ```
 Cliente → emit 'join-room' + userId
-       ← emit 'user-joined' + fila global
-       → Restaura fila do localStorage
+       ← emit 'user-joined' + fila pessoal/global + vídeo em andamento
+       → Restaura o player se havia música tocando (ex: após refresh)
 ```
 
 ### 3️⃣ Adicionar Música
@@ -157,7 +158,6 @@ Cliente 1 → emit 'select-card'
          ← broadcast 'play-video' para todos
 Cliente 2 → Recebe 'play-video'
          → Remove mesma música da sua fila
-         → Sincroniza com localStorage
 ```
 
 ## 🔑 Conceitos Principais
@@ -166,9 +166,12 @@ Cliente 2 → Recebe 'play-video'
 - **Global**: Lista de todas as músicas adicionadas (todos veem igual)
 - **Pessoal**: Cópia individual (cada um remove o que tocou)
 
-### localStorage Persistence
-- `userId`: Identificador único do usuário (gerado uma vez)
-- `queue_${roomCode}`: Fila pessoal (atualizada a cada mudança)
+### Persistência de Sessão
+- `userId` (localStorage): identificador único do usuário, gerado uma vez
+- Código da sala: mantido na URL (`/room/:code`), sobrevive a um refresh
+- Fila e vídeo em andamento: guardados no servidor (em memória) e mantidos
+  por um período de graça (10s) quando o socket desconecta, para que um
+  refresh de página não apague o estado da sala
 
 ### Socket.IO
 - Conexão bidirecional em tempo real
@@ -193,10 +196,8 @@ Cliente 2 → Recebe 'play-video'
           ┌────────▼────────┐
           │   Backend       │
           │ (Node + Express)│
+          │ (Estado da sala)│
           └─────────────────┘
-                   │
-          localStorage │
-          (Persistência)│
 ```
 
 ## 🛠️ Tecnologias
@@ -269,7 +270,7 @@ npm run build
 ## 💡 Dicas
 
 - 🔗 Compartilhe o link sem recarregar a página para mais velocidade
-- 💾 Sua fila é salva no localStorage - recarregar não perde progresso
+- 💾 Recarregar a página não perde progresso - a sala te espera por alguns segundos
 - 🔄 Sincronização é automática entre todos os usuários
 - 🎴 Quanto mais músicas, mais emoção na escolha das cartas!
 

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { AuthContext } from "../contexts/AuthContext"
 import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
@@ -14,6 +14,7 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 
 function Room() {
   const { code } = useParams()
+  const navigate = useNavigate()
   const { userId } = useContext(AuthContext)
   const {
     roomCode,
@@ -41,9 +42,16 @@ function Room() {
   }, [code, roomCode, setRoomCode])
 
   useEffect(() => {
-    if (roomCode) {
-      socket.emit("join-room", roomCode)
-    }
+    if (!roomCode || !socket) return
+
+    socket.emit("join-room", roomCode)
+
+    // Reentra na sala automaticamente se o socket reconectar
+    // (queda de rede, aba em segundo plano, etc.)
+    const handleReconnect = () => socket.emit("join-room", roomCode)
+    socket.on("connect", handleReconnect)
+
+    return () => socket.off("connect", handleReconnect)
   }, [roomCode, socket])
 
   useEffect(() => {
@@ -52,34 +60,28 @@ function Room() {
         console.log(`✅ [Frontend] user-joined recebido:`, data);
         console.log(`📊 [Frontend] Fila pessoal recebida: ${data.queue ? data.queue.length : 0} música(s)`);
         console.log(`📊 [Frontend] Fila global recebida: ${data.globalQueue ? data.globalQueue.length : 0} música(s)`);
-        
-        // Verificar se há fila salva no localStorage (de um reload anterior)
-        const savedQueue = localStorage.getItem(`queue_${roomCode}`);
-        
-        if (savedQueue) {
-          try {
-            const parsedQueue = JSON.parse(savedQueue);
-            console.log(`🔄 [Frontend] Restaurando fila do localStorage: ${parsedQueue.length} música(s)`);
-            setQueue(parsedQueue);
-          } catch (e) {
-            console.error(`❌ [Frontend] Erro ao restaurar fila do localStorage:`, e);
-            // Se falhar, usar a do servidor
-            if (data.queue && Array.isArray(data.queue)) {
-              setQueue(data.queue);
-              localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
-              console.log(`💾 [Frontend] Usando fila do servidor`);
-            }
-          }
-        } else {
-          // Primeira vez nesta sala - usar fila do servidor
-          if (data.queue && Array.isArray(data.queue)) {
-            setQueue(data.queue);
-            localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.queue));
-            console.log(`💾 [Frontend] Fila do servidor salva no localStorage`);
-          }
+
+        // O servidor é a fonte da verdade para a fila (mantida entre
+        // reconexões graças ao período de graça no backend)
+        if (data.queue && Array.isArray(data.queue)) {
+          setQueue(data.queue);
+        }
+
+        // Restaura o vídeo em andamento (ex: após dar refresh na página)
+        if (data.currentVideo) {
+          console.log(`🔄 [Frontend] Restaurando vídeo em andamento:`, data.currentVideo.title);
+          setCurrentVideo(data.currentVideo);
+          setElapsedTime(data.elapsedTime || 0);
+          setIsPlaying(true);
         }
       })
-      
+
+      socket.on("room-error", (message) => {
+        console.error(`❌ [Frontend] room-error:`, message);
+        alert(message || "Sala não encontrada");
+        navigate("/");
+      })
+
       socket.on("video-added", (data) => {
         console.log(`🎵 [Frontend] Novo vídeo adicionado:`, data.video.title);
         // Novo vídeo foi adicionado - adiciona apenas o novo à fila pessoal
@@ -87,8 +89,6 @@ function Room() {
         setQueue(prevQueue => {
           const newQueue = [...prevQueue, video]
           console.log(`📝 [Frontend] Fila pessoal agora tem ${newQueue.length} música(s)`)
-          // Salva automaticamente no localStorage
-          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(newQueue))
           return newQueue
         })
       })
@@ -111,7 +111,6 @@ function Room() {
           console.log(`✅ [Frontend] Você selecionou! Atualizando fila pessoal`)
           console.log(`📝 [Frontend] Fila atualizada: ${data.userQueue.length} música(s)`)
           setQueue(data.userQueue)
-          localStorage.setItem(`queue_${roomCode}`, JSON.stringify(data.userQueue))
         } else {
           // Se foi outro usuário que selecionou, remover a MESMA música da sua fila
           console.log(`⏭️ [Frontend] Outro usuário selecionou. Removendo essa música de sua fila.`)
@@ -119,7 +118,6 @@ function Room() {
             const videoId = video.id
             const newQueue = prevQueue.filter(v => v.id !== videoId)
             console.log(`🗑️ [Frontend] Música removida: ${prevQueue.length} ➜ ${newQueue.length} música(s)`)
-            localStorage.setItem(`queue_${roomCode}`, JSON.stringify(newQueue))
             return newQueue
           })
         }
@@ -226,7 +224,7 @@ function Room() {
       
       <div className="room-content">
         <header className="room-header">
-          <h1 className="room-title">🎵 Baile</h1>
+          <h1 className="room-title">🎵 Baralhô</h1>
           <h2 className="room-code">Sala: <span>{roomCode}</span></h2>
         </header>
 

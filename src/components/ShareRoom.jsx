@@ -15,7 +15,7 @@ function ShareRoom({ roomCode }) {
   function handleShare() {
     if (navigator.share) {
       navigator.share({
-        title: "🎵 Baile - Sala de Música",
+        title: "🎵 Baralhô - Sala de Música",
         text: "Vem ouvir música comigo!",
         url: shareUrl
       })

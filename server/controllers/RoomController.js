@@ -29,21 +29,27 @@ export class RoomController {
 
     const room = this.roomService.getRoomByCode(roomCode);
 
+    // Cancela remoção pendente (usuário está reconectando, ex: refresh da página)
+    this.roomService.cancelUserRemoval(roomCode, userId);
+
     socket.join(roomCode);
     socket.roomCode = roomCode;
     socket.userId = userId;
-    
+
     room.addUser(userId);
-    
+
     const userQueue = room.getUserQueue(userId);
+    const currentVideoData = room.getUserCurrentVideo(userId);
     console.log(`📊 [RoomController] ${userId} recebeu ${userQueue.length} música(s) da fila global`);
     console.log(`📊 [RoomController] Fila global tem ${room.globalQueue.length} música(s) total`);
 
-    // Envia a fila pessoal + fila global para sincronizar
+    // Envia a fila pessoal + fila global + música em andamento para sincronizar
     socket.emit('user-joined', {
       userCount: room.getUserCount(),
       queue: userQueue,
-      globalQueue: room.globalQueue
+      globalQueue: room.globalQueue,
+      currentVideo: currentVideoData ? currentVideoData.video : null,
+      elapsedTime: currentVideoData ? room.getElapsedTimeForUser(userId) : 0
     });
 
     io.to(roomCode).emit('user-count-updated', room.getUserCount());
@@ -51,21 +57,27 @@ export class RoomController {
 
   handleDisconnect(socket, roomService, io) {
     if (socket.roomCode && socket.userId) {
-      const room = roomService.getRoomByCode(socket.roomCode);
-      
-      if (room) {
-        room.removeUser(socket.userId);
-        room.removeUserVideo(socket.userId);
-        
-        console.log(`👋 [RoomController] ${socket.userId} desconectou da sala ${socket.roomCode}`);
-        
+      const roomCode = socket.roomCode;
+      const userId = socket.userId;
+
+      console.log(`👋 [RoomController] ${userId} desconectou da sala ${roomCode} (aguardando reconexão)`);
+
+      // Só remove o usuário de fato após um período de graça, para não
+      // destruir a sala/estado quando é apenas um refresh de página
+      roomService.scheduleUserRemoval(roomCode, userId, () => {
+        const room = roomService.getRoomByCode(roomCode);
+        if (!room) return;
+
+        room.removeUser(userId);
+        room.removeUserVideo(userId);
+
         if (room.getUserCount() > 0) {
-          io.to(socket.roomCode).emit('user-left', room.getUserCount());
+          io.to(roomCode).emit('user-left', room.getUserCount());
         } else {
-          roomService.deleteRoom(socket.roomCode);
-          console.log(`🗑️ [RoomController] Sala ${socket.roomCode} deletada (sem usuários)`);
+          roomService.deleteRoom(roomCode);
+          console.log(`🗑️ [RoomController] Sala ${roomCode} deletada (sem usuários)`);
         }
-      }
+      });
     }
   }
 }

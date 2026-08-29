@@ -17,7 +17,7 @@ const io = new Server(httpServer, {
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.json({ status: 'Backend Baile online ✅' });
+  res.json({ status: 'Backend Baralhô online ✅' });
 });
 
 // Initialize Room Service

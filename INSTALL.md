@@ -12,7 +12,7 @@ Certifique-se de ter instalado:
 
 ## 🔑 Configuração da API do YouTube
 
-Dentro da pasta `Baile/`, crie um arquivo chamado `.env` com o seguinte conteúdo:
+Dentro da pasta `Baralhô/`, crie um arquivo chamado `.env` com o seguinte conteúdo:
 
 VITE_YOUTUBE_API_KEY=SUA_CHAVE_AQUI
 
@@ -42,7 +42,7 @@ http://localhost:3000
 
 1. Acesse a pasta do frontend:
 ```bash
-cd Baile
+cd Baralhô
 
 ```
 2. Instale as dependências:
