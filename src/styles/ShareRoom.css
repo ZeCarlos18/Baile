@@ -164,3 +164,18 @@
     width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .share-room-card {
+    padding: 16px;
+    border-radius: 15px;
+  }
+}
+
+@media (hover: none) {
+  .share-room-card:hover,
+  .copy-btn:hover:not(.copied),
+  .share-btn:hover {
+    transform: none;
+  }
+}

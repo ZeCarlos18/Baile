@@ -11,6 +11,9 @@
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
+  /* Com muitas cartas o baralho passa da altura da tela: rola em vez de cortar */
+  overflow-y: auto;
+  padding: 20px 0;
 }
 
 @keyframes fadeIn {
@@ -35,6 +38,8 @@
   width: 90%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.4s ease-out;
+  /* Centraliza, mas encosta no topo (sem cortar) quando não cabe */
+  margin: auto;
 }
 
 @keyframes slideUp {
@@ -155,12 +160,14 @@
   border: 2px solid #ddd;
 }
 
+/* Nome próprio: o Room.css também tem um "float" (que move 50px na
+   diagonal) e sobrescrevia este, jogando o ícone para o canto da carta */
 .card-icon {
   font-size: 48px;
-  animation: float 2s ease-in-out infinite;
+  animation: card-float 2s ease-in-out infinite;
 }
 
-@keyframes float {
+@keyframes card-float {
   0%,
   100% {
     transform: translateY(0);
@@ -183,6 +190,12 @@
   white-space: normal;
   word-wrap: break-word;
   line-height: 1.3;
+  /* Títulos longos terminam em "..." em vez de vazar da carta */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
 }
 
 .card:hover .card-front {
@@ -229,6 +242,8 @@
 
   .card-title {
     font-size: 24px;
+    padding: 0 50px;
+    text-align: center;
   }
 
   .cards-grid {
@@ -251,12 +266,43 @@
 
 @media (max-width: 480px) {
   .card-container {
-    padding: 20px;
+    width: calc(100% - 24px);
+    padding: 20px 16px;
     gap: 15px;
+    border-radius: 20px;
   }
 
+  /* Espaço dos dois lados para o título não passar por baixo do ✕ */
   .card-title {
     font-size: 20px;
+    padding: 0 44px;
+    text-align: center;
+  }
+
+  .card-close-btn {
+    top: 14px;
+    right: 14px;
+  }
+
+  .card-back {
+    padding: 6px;
+  }
+
+  .card-content {
+    padding: 2px;
+  }
+
+  .card-song-title {
+    -webkit-line-clamp: 7;
+    line-clamp: 7;
+  }
+
+  .results-info {
+    padding: 14px;
+  }
+
+  .results-text {
+    font-size: 15px;
   }
 
   .card-subtitle {
@@ -284,5 +330,11 @@
     width: 40px;
     height: 40px;
     font-size: 24px;
+  }
+}
+
+@media (hover: none) {
+  .card:hover .card-front {
+    transform: none;
   }
 }

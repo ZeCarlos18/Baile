@@ -107,9 +107,11 @@
 }
 
 /* Grid Layout */
+/* minmax(0, 1fr): sem isso a coluna cresce até caber o conteúdo mais largo
+   (player de 640px, títulos longos) e a página fica cortada no celular */
 .room-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 30px;
   animation: fadeIn 0.8s ease-out;
   height: fit-content;
@@ -133,13 +135,13 @@
 }
 
 /* Seções */
+/* Os títulos ficam dentro de cartões brancos: em branco não apareciam */
 .section-title {
   font-size: 20px;
   font-weight: 600;
-  color: white;
+  color: #333;
   margin-top: 0;
   margin-bottom: 15px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .search-section {
@@ -191,6 +193,16 @@
 
 .player-section {
   margin-bottom: 25px;
+}
+
+/* O iframe do YouTube vem com 640x390 fixos: ocupa a largura do cartão */
+.player-section iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
 }
 
 /* Search Bar */
@@ -435,12 +447,38 @@
 /* Responsivo */
 @media (max-width: 1024px) {
   .room-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
 
+  /* Em uma coluna, as seções das duas colunas viram uma lista só, na ordem
+     de uso: o que está tocando, buscar, resultados, fila e convite */
+  .room-left,
+  .room-right {
+    display: contents;
+  }
+
+  .player-section {
+    order: 1;
+    margin-bottom: 0;
+  }
+
+  .search-section {
+    order: 2;
+  }
+
   .results-section {
-    max-height: calc(100vh - 400px);
+    order: 3;
+    max-height: none;
+  }
+
+  .queue-section {
+    order: 4;
+  }
+
+  .share-room-container {
+    order: 5;
+    margin-bottom: 0;
   }
 
   .room-title {
@@ -459,10 +497,6 @@
 
   .room-header {
     margin-bottom: 30px;
-  }
-
-  .results-section {
-    max-height: calc(100vh - 350px);
   }
 
   .room-title {
@@ -491,7 +525,7 @@
 
   .result-item {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 10px;
   }
 
@@ -506,8 +540,8 @@
     padding: 15px;
   }
 
-  .results-section {
-    max-height: calc(100vh - 300px);
+  .room-header {
+    margin-bottom: 20px;
   }
 
   .room-title {
@@ -522,13 +556,37 @@
     font-size: 16px;
   }
 
-  .btn-spin-roulette {
-    padding: 15px;
-    font-size: 16px;
-    gap: 8px;
+  .search-section,
+  .results-section,
+  .queue-section,
+  .player-section {
+    padding: 16px;
   }
 
-  .spin-icon {
-    font-size: 20px;
+  .player-section iframe {
+    border-radius: 8px;
+  }
+
+  .btn-choose-music {
+    padding: 16px;
+  }
+
+  .choose-text {
+    font-size: 16px;
+  }
+
+  .sound-overlay .btn-choose-music {
+    padding: 18px 24px;
+  }
+}
+
+/* Em tela de toque o :hover "gruda" depois do toque e deixa itens
+   deslocados; lá os efeitos de passar o mouse ficam desligados */
+@media (hover: none) {
+  .result-item:hover,
+  .btn-choose-music:hover:not(:disabled),
+  .search-btn:hover,
+  .btn-add-video:hover {
+    transform: none;
   }
 }
