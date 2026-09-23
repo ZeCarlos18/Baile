@@ -116,7 +116,11 @@ export function useRoom(roomCode, { onNotFound }) {
     socket.emit("video-ended", { roomCode, entryId })
   }, [socket, roomCode])
 
-  return { room, deck, addVideo, startDraw, pickCard, dismissDeck, finishReveal, videoEnded }
+  const videoError = useCallback((entryId, code) => {
+    socket.emit("video-error", { roomCode, entryId, code })
+  }, [socket, roomCode])
+
+  return { room, deck, addVideo, startDraw, pickCard, dismissDeck, finishReveal, videoEnded, videoError }
 }
 
 function newDeck({ drawId, cardCount, openedBy = null }) {

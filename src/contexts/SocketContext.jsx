@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react"
 import { io } from "socket.io-client"
 import { AuthContext } from "./AuthContext"
+import { ServerClockContext, useClockSync } from "../hooks/useServerClock"
 
 export const SocketContext = createContext(null)
 
@@ -35,6 +36,8 @@ export function SocketProvider({ children }) {
     })
   )
 
+  const serverNow = useClockSync(socket)
+
   useEffect(() => {
     socket.connect()
     return () => socket.disconnect()
@@ -42,7 +45,9 @@ export function SocketProvider({ children }) {
 
   return (
     <SocketContext.Provider value={socket}>
-      {children}
+      <ServerClockContext.Provider value={serverNow}>
+        {children}
+      </ServerClockContext.Provider>
     </SocketContext.Provider>
   )
 }

@@ -1,79 +1,46 @@
-import { useEffect, useRef } from "react"
-
-let apiLoaded = false
-
-// Posição em que a música deveria estar agora, a partir do startAt do servidor
-function secondsSince(startAt) {
-  return Math.max(0, (Date.now() - startAt) / 1000)
-}
+import { useCallback, useEffect, useRef } from "react"
+import { SyncedPlayer } from "../lib/SyncedPlayer"
+import { useServerNow } from "./useServerClock"
 
 /**
- * `playKey` identifica a execução (entryId): a mesma música tocada duas
- * vezes seguidas também recarrega. `onVideoEnd` e `startAt` ficam em refs
- * para que re-renders da sala não reiniciem a música.
+ * Liga um SyncedPlayer ao ciclo de vida do componente. O player é criado
+ * uma vez; os callbacks ficam em refs, então o efeito de troca de música
+ * depende só de `entryId` e `startAt`.
  */
-export function usePlayer({ videoId, playKey, startAt, onVideoEnd }) {
-  const playerRef = useRef(null)
-  const onVideoEndRef = useRef(onVideoEnd)
-  const startAtRef = useRef(startAt)
+export function usePlayer({ containerRef, nowPlaying, onEnded, onError, onBlocked, onPlaying }) {
+  const serverNow = useServerNow()
+  const controllerRef = useRef(null)
+  const latest = useRef(null)
 
   useEffect(() => {
-    onVideoEndRef.current = onVideoEnd
-    startAtRef.current = startAt
+    latest.current = { nowPlaying, serverNow, onEnded, onError, onBlocked, onPlaying }
   })
 
   useEffect(() => {
-    if (!apiLoaded) {
-      const tag = document.createElement("script")
-      tag.src = "https://www.youtube.com/iframe_api"
-      document.body.appendChild(tag)
-      apiLoaded = true
-    }
-
-    const waitForApi = setInterval(() => {
-      if (window.YT && window.YT.Player) {
-        clearInterval(waitForApi)
-        initializePlayer()
-      }
-    }, 100)
-
-    function initializePlayer() {
-      try {
-        if (!playerRef.current) {
-          playerRef.current = new window.YT.Player("player", {
-            height: "390",
-            width: "640",
-            videoId: videoId,
-            events: {
-              onReady: (event) => {
-                const startSeconds = secondsSince(startAtRef.current)
-                if (startSeconds > 0) {
-                  event.target.seekTo(startSeconds, true)
-                }
-                event.target.playVideo()
-              },
-              onStateChange: (event) => {
-                if (event.data === window.YT.PlayerState.ENDED) {
-                  onVideoEndRef.current?.()
-                }
-              }
-            }
-          })
-        } else {
-          playerRef.current.loadVideoById({
-            videoId,
-            startSeconds: secondsSince(startAtRef.current)
-          })
-        }
-      } catch (error) {
-        console.error("Error initializing player:", error)
-      }
-    }
+    const controller = new SyncedPlayer(containerRef.current, {
+      serverNow: () => latest.current.serverNow(),
+      onEnded: (entryId) => latest.current.onEnded?.(entryId),
+      onError: (entryId, code) => latest.current.onError?.(entryId, code),
+      onBlocked: () => latest.current.onBlocked?.(),
+      onPlaying: () => latest.current.onPlaying?.()
+    })
+    controllerRef.current = controller
 
     return () => {
-      clearInterval(waitForApi)
+      controller.destroy()
+      controllerRef.current = null
     }
-  }, [videoId, playKey])
+  }, [containerRef])
 
-  return playerRef
+  const entryId = nowPlaying?.entry.entryId
+  const startAt = nowPlaying?.startAt
+
+  useEffect(() => {
+    controllerRef.current?.setNowPlaying(latest.current.nowPlaying)
+  }, [entryId, startAt])
+
+  const resume = useCallback(() => controllerRef.current?.resume(), [])
+  const getPlayer = useCallback(() => controllerRef.current?.player ?? null, [])
+
+  return { resume, getPlayer }
 }

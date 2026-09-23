@@ -52,7 +52,7 @@ function CardDeck({ cardCount, pickedIndex, reveal, onPick, onClose, onRevealEnd
         </button>
 
         <h2 className="card-title">Escolha sua próxima música</h2>
-        <p className="card-subtitle">{cardCount} música{cardCount !== 1 ? 's' : ''} disponível{cardCount !== 1 ? 's' : ''}</p>
+        <p className="card-subtitle">{cardCount} {cardCount !== 1 ? 'músicas disponíveis' : 'música disponível'}</p>
 
         <div className="cards-grid">
           {cards.map((index) => (
