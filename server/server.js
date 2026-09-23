@@ -21,7 +21,9 @@ app.get('/', (req, res) => {
 });
 
 // Initialize Room Service
-const roomService = new RoomService();
+const roomService = new RoomService({
+  emit: (roomCode, event, payload) => io.to(roomCode).emit(event, payload)
+});
 
 // Setup Socket Events
 setupSocketEvents(io, roomService);

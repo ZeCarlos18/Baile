@@ -9,10 +9,10 @@ function QueueList({ queue }) {
           <p className="queue-empty">Nenhuma música na fila...</p>
         ) : (
           <ul className="queue-items">
-            {queue.map((v, index) => (
-              <li key={v.id} className="queue-item">
+            {queue.map((entry, index) => (
+              <li key={entry.entryId} className="queue-item">
                 <span className="queue-number">{index + 1}</span>
-                <span className="queue-title-text">{v.title}</span>
+                <span className="queue-title-text">{entry.title}</span>
               </li>
             ))}
           </ul>

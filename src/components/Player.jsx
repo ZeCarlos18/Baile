@@ -1,16 +1,31 @@
+import { useImperativeHandle, useRef } from "react"
 import { usePlayer } from "../hooks/usePlayer"
-import { useEffect } from "react"
 
-function Player({ videoId, onVideoEnd, startTime, onPlayerReady }) {
-  const playerRef = usePlayer(videoId, onVideoEnd, startTime)
+// Fica sempre montado (o player do YouTube é criado uma vez só) e apenas
+// se esconde quando não há nada tocando. `ref` expõe `resume()` e `player`.
+function Player({ ref, nowPlaying, onEnded, onError, onBlocked, onPlaying }) {
+  const containerRef = useRef(null)
+  const { resume, getPlayer } = usePlayer({
+    containerRef,
+    nowPlaying,
+    onEnded,
+    onError,
+    onBlocked,
+    onPlaying
+  })
 
-  useEffect(() => {
-    if (playerRef.current && onPlayerReady) {
-      onPlayerReady(playerRef.current)
+  useImperativeHandle(ref, () => ({
+    resume,
+    get player() {
+      return getPlayer()
     }
-  }, [playerRef, onPlayerReady])
+  }), [resume, getPlayer])
 
-  return <div id="player"></div>
+  return (
+    <div className="player-section" style={nowPlaying ? undefined : { display: "none" }}>
+      <div ref={containerRef}></div>
+    </div>
+  )
 }
 
 export default Player

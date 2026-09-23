@@ -1,24 +1,23 @@
-import { createContext, useMemo } from 'react'
+import { createContext, useState } from 'react'
 
 export const AuthContext = createContext()
 
+// userId por aba (sessionStorage): sobrevive ao refresh, mas cada aba
+// aberta é uma pessoa diferente na sala
+function getOrCreateUserId() {
+  let stored = sessionStorage.getItem('userId')
+
+  if (!stored) {
+    // Gerar novo userId: user_timestamp_randomString
+    stored = `user_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+    sessionStorage.setItem('userId', stored)
+  }
+
+  return stored
+}
+
 export function AuthProvider({ children }) {
-  // Gerar ou recuperar userId do localStorage - APENAS UMA VEZ
-  const userId = useMemo(() => {
-    let stored = localStorage.getItem('userId')
-    
-    if (!stored) {
-      console.log('🆔 [AuthContext] Gerando novo userId');
-      // Gerar novo userId: user_timestamp_randomString
-      stored = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      localStorage.setItem('userId', stored)
-      console.log('✅ [AuthContext] userId salvo no localStorage:', stored);
-    } else {
-      console.log('♻️ [AuthContext] Recuperando userId do localStorage:', stored);
-    }
-    
-    return stored
-  }, [])
+  const [userId] = useState(getOrCreateUserId)
 
   return (
     <AuthContext.Provider value={{ userId }}>
