@@ -1,37 +1,26 @@
-import { useContext, useMemo } from 'react'
-import { io } from "socket.io-client"
-import { AuthContext } from '../contexts/AuthContext'
-
-const getServerUrl = () => {
-  if (import.meta.env.VITE_SOCKET_URL) {
-    return import.meta.env.VITE_SOCKET_URL
-  }
-  
-  if (typeof window === 'undefined') return 'http://localhost:3000'
-  
-  const protocol = window.location.protocol
-  const hostname = window.location.hostname
-  const port = 3000
-  
-  return `${protocol}//${hostname}:${port}`
-}
+import { useContext, useEffect, useRef } from 'react'
+import { SocketContext } from '../contexts/SocketContext'
 
 export function useSocket() {
-  const { userId } = useContext(AuthContext)
-  
-  const socket = useMemo(() => {
-    console.log(`🔌 [useSocket] Conectando com userId:`, userId)
-    
-    return io(getServerUrl(), {
-      query: {
-        userId: userId
-      },
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
-    })
-  }, [userId])
-  
-  return socket
+  return useContext(SocketContext)
+}
+
+/**
+ * Escuta um evento do socket enquanto o componente estiver montado.
+ * O handler é lido de um ref, então sempre enxerga o estado atual sem
+ * precisar registrar o listener de novo a cada render.
+ */
+export function useSocketEvent(event, handler) {
+  const socket = useSocket()
+  const handlerRef = useRef(handler)
+
+  useEffect(() => {
+    handlerRef.current = handler
+  })
+
+  useEffect(() => {
+    const listener = (...args) => handlerRef.current(...args)
+    socket.on(event, listener)
+    return () => socket.off(event, listener)
+  }, [socket, event])
 }

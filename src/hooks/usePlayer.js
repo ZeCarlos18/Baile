@@ -2,8 +2,25 @@ import { useEffect, useRef } from "react"
 
 let apiLoaded = false
 
-export function usePlayer(videoId, onVideoEnd, startTime = 0) {
+// Posição em que a música deveria estar agora, a partir do startAt do servidor
+function secondsSince(startAt) {
+  return Math.max(0, (Date.now() - startAt) / 1000)
+}
+
+/**
+ * `playKey` identifica a execução (entryId): a mesma música tocada duas
+ * vezes seguidas também recarrega. `onVideoEnd` e `startAt` ficam em refs
+ * para que re-renders da sala não reiniciem a música.
+ */
+export function usePlayer({ videoId, playKey, startAt, onVideoEnd }) {
   const playerRef = useRef(null)
+  const onVideoEndRef = useRef(onVideoEnd)
+  const startAtRef = useRef(startAt)
+
+  useEffect(() => {
+    onVideoEndRef.current = onVideoEnd
+    startAtRef.current = startAt
+  })
 
   useEffect(() => {
     if (!apiLoaded) {
@@ -29,26 +46,24 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0) {
             videoId: videoId,
             events: {
               onReady: (event) => {
-                if (startTime && startTime > 0) {
-                  event.target.seekTo(startTime)
+                const startSeconds = secondsSince(startAtRef.current)
+                if (startSeconds > 0) {
+                  event.target.seekTo(startSeconds, true)
                 }
                 event.target.playVideo()
               },
               onStateChange: (event) => {
                 if (event.data === window.YT.PlayerState.ENDED) {
-                  if (onVideoEnd) {
-                    onVideoEnd()
-                  }
+                  onVideoEndRef.current?.()
                 }
               }
             }
           })
         } else {
-          playerRef.current.cueVideoById(videoId)
-          if (startTime && startTime > 0) {
-            playerRef.current.seekTo(startTime)
-          }
-          playerRef.current.playVideo()
+          playerRef.current.loadVideoById({
+            videoId,
+            startSeconds: secondsSince(startAtRef.current)
+          })
         }
       } catch (error) {
         console.error("Error initializing player:", error)
@@ -58,7 +73,7 @@ export function usePlayer(videoId, onVideoEnd, startTime = 0) {
     return () => {
       clearInterval(waitForApi)
     }
-  }, [videoId, onVideoEnd, startTime])
+  }, [videoId, playKey])
 
   return playerRef
 }

@@ -1,6 +1,5 @@
-import { useContext, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { RoomContext } from "../contexts/RoomContext"
 import { useSocket } from "../hooks/useSocket"
 import CardFan from "../components/home/CardFan"
 import Feature from "../components/home/Feature"
@@ -40,38 +39,42 @@ const STEPS = [
 ]
 
 function Home() {
-  const { setRoomCode } = useContext(RoomContext)
   const socket = useSocket()
   const navigate = useNavigate()
 
   const [isCreating, setIsCreating] = useState(false)
   const [showJoinModal, setShowJoinModal] = useState(false)
-  const creatingTimeout = useRef(null)
+  const mounted = useRef(true)
 
   useEffect(() => {
-    return () => clearTimeout(creatingTimeout.current)
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
   }, [])
 
   function createRoom() {
     if (isCreating) return
 
     setIsCreating(true)
-    // Trava apenas o estado visual do botão caso o servidor não responda.
-    creatingTimeout.current = setTimeout(() => setIsCreating(false), 8000)
 
-    socket.emit("create-room")
-
-    socket.once("room-created", (code) => {
-      clearTimeout(creatingTimeout.current)
+    // O servidor responde com o código pelo acknowledgement. O timeout só
+    // destrava o botão caso ele não responda.
+    socket.timeout(8000).emit("create-room", (err, response) => {
+      if (!mounted.current) return
       setIsCreating(false)
-      setRoomCode(code)
-      navigate(`/room/${code}`)
+
+      if (err || !response?.ok) {
+        alert("Não foi possível criar a sala. Tente novamente.")
+        return
+      }
+
+      navigate(`/room/${response.code}`)
     })
   }
 
   function joinRoom(code) {
     setShowJoinModal(false)
-    setRoomCode(code)
     navigate(`/room/${code}`)
   }
 
