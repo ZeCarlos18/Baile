@@ -1,53 +1,109 @@
-import { RoomController } from '../controllers/RoomController.js';
-import { QueueController } from '../controllers/QueueController.js';
-import { CardController } from '../controllers/CardController.js';
+/**
+ * Adapta os eventos do Socket.IO para o RoomService.
+ *
+ * Todo handler responde pelo acknowledgement (quando o cliente manda um)
+ * com `{ ok: true, ... }` ou `{ ok: false, error }`. Nenhuma exceção escapa:
+ * o Socket.IO chama os handlers dentro de `process.nextTick`, então um erro
+ * não tratado derrubaria o servidor inteiro.
+ */
+
+const isObject = value => value !== null && typeof value === 'object'
+const isNonEmptyString = value => typeof value === 'string' && value.trim().length > 0
+
+function normalizeUserId(raw) {
+  return isNonEmptyString(raw) ? raw.trim().slice(0, 64) : null
+}
 
 export function setupSocketEvents(io, roomService) {
-  const roomController = new RoomController(roomService);
-  const queueController = new QueueController(roomService);
-  const cardController = new CardController(roomService);
-
   io.on('connection', (socket) => {
-    const userId = socket.handshake.query.userId;
-    console.log(`🔌 [Socket] Nova conexão - userId: ${userId}`);
+    const userId = normalizeUserId(socket.handshake.query.userId) ?? socket.id
 
-    // Room Events
-    socket.on('create-room', () => {
-      console.log(`🏠 [Socket] create-room recebido de ${userId}`);
-      roomController.createRoom(socket, io, userId);
-    });
+    function on(event, handler) {
+      socket.on(event, (payload, ack) => {
+        if (typeof payload === 'function') {
+          ack = payload
+          payload = undefined
+        }
+        const reply = typeof ack === 'function' ? ack : () => {}
 
-    socket.on('join-room', (roomCode) => {
-      console.log(`🚪 [Socket] join-room recebido: ${roomCode} de ${userId}`);
-      roomController.joinRoom(socket, io, roomCode, userId);
-    });
+        try {
+          reply(handler(payload) ?? { ok: true })
+        } catch (err) {
+          console.error(`❌ [socket] erro em '${event}' (${userId}):`, err)
+          reply({ ok: false, error: 'internal' })
+        }
+      })
+    }
 
-    // Queue Events
-    socket.on('add-video', (data) => {      
-      console.log(`📥 Socket 'add-video' recebido para sala: ${data.code || socket.roomCode} de ${userId}`);      
-      queueController.addVideo(socket, io, data, userId);
-    });
+    // Eventos de sala só valem para a sala em que este socket entrou
+    function inRoom(handler) {
+      return (payload) => {
+        const code = socket.data.roomCode
+        if (!code || !isObject(payload) || payload.roomCode !== code) {
+          return { ok: false, error: 'not-in-room' }
+        }
+        return handler(code, payload)
+      }
+    }
 
-    // Card Events
-    socket.on('request-cards', (roomCode) => {
-      console.log(`🎴 [Socket] request-cards recebido: ${roomCode} de ${userId}`);
-      cardController.requestCards(socket, io, roomCode, userId);
-    });
+    function leaveCurrentRoom() {
+      const code = socket.data.roomCode
+      if (!code) return
+      socket.leave(code)
+      socket.data.roomCode = null
+      roomService.leave(code, userId, socket.id)
+    }
 
-    socket.on('select-card', (data) => {
-      console.log(`🃏 [Socket] select-card recebido de ${userId}:`, data);
-      cardController.selectCard(socket, io, data, userId);
-    });
+    on('create-room', () => ({ ok: true, code: roomService.createRoom().code }))
 
-    socket.on('sync-time', (data) => {
-      console.log(`⏱️ [Socket] sync-time recebido de ${userId}`);
-      cardController.syncTime(socket, io, data, userId);
-    });
+    on('join-room', (payload) => {
+      if (!isObject(payload) || !isNonEmptyString(payload.roomCode)) {
+        return { ok: false, error: 'invalid-payload' }
+      }
+      const code = payload.roomCode.trim().toUpperCase()
 
-    // Disconnect Event
+      if (socket.data.roomCode && socket.data.roomCode !== code) leaveCurrentRoom()
+
+      const room = roomService.join(code, userId, socket.id)
+      if (!room) return { ok: false, error: 'not-found' }
+
+      socket.join(code)
+      socket.data.roomCode = code
+      return { ok: true, state: room.snapshot() }
+    })
+
+    on('leave-room', inRoom(() => {
+      leaveCurrentRoom()
+    }))
+
+    on('add-video', inRoom((code, { videoId, title }) => {
+      if (!isNonEmptyString(videoId) || typeof title !== 'string') {
+        return { ok: false, error: 'invalid-payload' }
+      }
+      return roomService.addVideo(code, userId, { videoId, title })
+    }))
+
+    on('start-draw', inRoom((code) => roomService.startDraw(code, userId)))
+
+    on('pick-card', inRoom((code, { drawId, cardIndex }) =>
+      roomService.pickCard(code, userId, drawId, cardIndex)
+    ))
+
+    on('video-ended', inRoom((code, { entryId }) => roomService.videoEnded(code, entryId)))
+
+    on('video-error', inRoom((code, { entryId }) => roomService.videoError(code, entryId)))
+
+    on('time-ping', (payload) => ({
+      t0: isObject(payload) && typeof payload.t0 === 'number' ? payload.t0 : null,
+      serverNow: Date.now()
+    }))
+
     socket.on('disconnect', () => {
-      console.log(`❌ [Socket] Desconectado - userId: ${userId}`);
-      roomController.handleDisconnect(socket, roomService, io);
-    });
-  });
+      try {
+        leaveCurrentRoom()
+      } catch (err) {
+        console.error(`❌ [socket] erro ao desconectar (${userId}):`, err)
+      }
+    })
+  })
 }
